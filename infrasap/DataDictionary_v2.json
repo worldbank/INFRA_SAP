@@ -1,0 +1,348 @@
+{
+      "P1": {
+          "Name":"Urban_Population",
+          "raster_file":"WP_2020_1km_urban_pop.tif",
+          "vars":["SUM"],
+          "description":"A derivative of WorldPop 2020 population density at 1km2. This vector layer applies the newly adopted UN defiinition of Urban to the WorldPop grid. https://unstats.un.org/unsd/statcom/50th-session/ This people centric definition of Urban each grid cell is evaluated on two dimensions, the number of people in the cell must be greater than 300 and it must be contiguous with similarly populated cells in an area with an accumulated population of 5000 people."     },
+      "P2": {
+          "Name":"Demographics",
+          "raster_file":"WP2020_vulnerability_map.tif",
+          "vars":["SUM"],
+          "description":"This is the sum of all counts of each person in the age cohort according to the Age Incident Curve published by IHME"     },
+      "P3": {
+          "Name":"Age_incident_curve",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Derived from the Outbreak and Pandemic Preparedness team at the Institute for Health Metrics and Evaluation, University of Washington Contact: pigottdm@uw.edu https://github.com/beoutbreakprepared/nCoV2019"     },
+      "P4": {
+          "Name":"Obesity",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"The DHS Program STATcompiler makes custom tables based on demographic and health surveys in 90+ countries: https://www.statcompiler.com/en/"    },
+      "P5": {
+          "Name":"HeartDisease",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"The DHS Program STATcompiler makes custom tables based on demographic and health surveys in 90+ countries: https://www.statcompiler.com/en/"     },
+      "P6": {
+          "Name":"Diabetes?",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"The DHS Program STATcompiler makes custom tables based on demographic and health surveys in 90+ countries: https://www.statcompiler.com/en/"     },
+      "P7": {
+          "Name":"ImmuneComp",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"The DHS Program STATcompiler makes custom tables based on demographic and health surveys in 90+ countries: https://www.statcompiler.com/en/"     },
+      "P8": {
+          "Name":"Cancer",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"The DHS Program STATcompiler makes custom tables based on demographic and health surveys in 90+ countries: https://www.statcompiler.com/en/"     },
+      "A1": {
+          "Name":"Water_fountain_public",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"The DHS Program STATcompiler makes custom tables based on demographic and health surveys in 90+ countries: https://www.statcompiler.com/en/"     },
+      "A2": {
+          "Name":"Water_fountain_shared",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"The DHS Program STATcompiler makes custom tables based on demographic and health surveys in 90+ countries: https://www.statcompiler.com/en/"     },
+      "A3": {
+          "Name":"Water_toilet_public",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"The DHS Program STATcompiler makes custom tables based on demographic and health surveys in 90+ countries: https://www.statcompiler.com/en/"     },
+      "A4": {
+          "Name":"Water_toilet_shared",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"The DHS Program STATcompiler makes custom tables based on demographic and health surveys in 90+ countries: https://www.statcompiler.com/en/"      },
+      "A5": {
+          "Name":"Transport_public",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"The DHS Program STATcompiler makes custom tables based on demographic and health surveys in 90+ countries: https://www.statcompiler.com/en/"     },
+      "P4_fraym": {
+          "Name":"Obesity",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Fraym https://go.fraym.io/coviddatafraym The Fraym approach takes data from DHS and other professionally enumerated household surveys and uses machine learning to search for geospatial covariates in satellite imagery and other geostatistical datasets to disaggregate and re-aggregate as needed to cover geographically bounded area with a finer resolution estimation of the distribution of the needed indicator. "    },
+      "P5_fraym": {
+          "Name":"HeartDisease",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Fraym https://go.fraym.io/coviddatafraym The Fraym approach takes data from DHS and other professionally enumerated household surveys and uses machine learning to search for geospatial covariates in satellite imagery and other geostatistical datasets to disaggregate and re-aggregate as needed to cover geographically bounded area with a finer resolution estimation of the distribution of the needed indicator. "     },
+      "P6_fraym": {
+          "Name":"Diabetes?",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Fraym https://go.fraym.io/coviddatafraym The Fraym approach takes data from DHS and other professionally enumerated household surveys and uses machine learning to search for geospatial covariates in satellite imagery and other geostatistical datasets to disaggregate and re-aggregate as needed to cover geographically bounded area with a finer resolution estimation of the distribution of the needed indicator. "     },
+      "P7_fraym": {
+          "Name":"ImmuneComp",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Fraym https://go.fraym.io/coviddatafraym The Fraym approach takes data from DHS and other professionally enumerated household surveys and uses machine learning to search for geospatial covariates in satellite imagery and other geostatistical datasets to disaggregate and re-aggregate as needed to cover geographically bounded area with a finer resolution estimation of the distribution of the needed indicator. "     },
+      "P8_fraym": {
+          "Name":"Cancer",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Fraym https://go.fraym.io/coviddatafraym The Fraym approach takes data from DHS and other professionally enumerated household surveys and uses machine learning to search for geospatial covariates in satellite imagery and other geostatistical datasets to disaggregate and re-aggregate as needed to cover geographically bounded area with a finer resolution estimation of the distribution of the needed indicator. "     },
+      "A1_fraym": {
+          "Name":"Water_fountain_public",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Fraym https://go.fraym.io/coviddatafraym The Fraym approach takes data from DHS and other professionally enumerated household surveys and uses machine learning to search for geospatial covariates in satellite imagery and other geostatistical datasets to disaggregate and re-aggregate as needed to cover geographically bounded area with a finer resolution estimation of the distribution of the needed indicator. "     },
+      "A2_fraym": {
+          "Name":"Water_fountain_shared",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Fraym https://go.fraym.io/coviddatafraym The Fraym approach takes data from DHS and other professionally enumerated household surveys and uses machine learning to search for geospatial covariates in satellite imagery and other geostatistical datasets to disaggregate and re-aggregate as needed to cover geographically bounded area with a finer resolution estimation of the distribution of the needed indicator. "     },
+      "A3_fraym": {
+          "Name":"Water_toilet_public",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Fraym https://go.fraym.io/coviddatafraym The Fraym approach takes data from DHS and other professionally enumerated household surveys and uses machine learning to search for geospatial covariates in satellite imagery and other geostatistical datasets to disaggregate and re-aggregate as needed to cover geographically bounded area with a finer resolution estimation of the distribution of the needed indicator. "     },
+      "A4_fraym": {
+          "Name":"Water_toilet_shared",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Fraym https://go.fraym.io/coviddatafraym The Fraym approach takes data from DHS and other professionally enumerated household surveys and uses machine learning to search for geospatial covariates in satellite imagery and other geostatistical datasets to disaggregate and re-aggregate as needed to cover geographically bounded area with a finer resolution estimation of the distribution of the needed indicator. "      },
+      "A5_fraym": {
+          "Name":"Transport_public",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Fraym https://go.fraym.io/coviddatafraym The Fraym approach takes data from DHS and other professionally enumerated household surveys and uses machine learning to search for geospatial covariates in satellite imagery and other geostatistical datasets to disaggregate and re-aggregate as needed to cover geographically bounded area with a finer resolution estimation of the distribution of the needed indicator. "     },
+      "R12": {
+          "Name":"GHS-POP",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":" This spatial raster dataset depicts the distribution of population, expressed as the number of people per cell. Residential population estimates for target years 1975, 1990, 2000 and 2015 provided by CIESIN GPWv4.10 were disaggregated from census or administrative units to grid cells, informed by the distribution and density of built-up as mapped in the Global Human Settlement Layer (GHSL) global layer per corresponding epoch. https://ghsl.jrc.ec.europa.eu/ghs_pop2019.php"     },
+      "S1": {
+          "Name":"Case_Rates_by_Age_Severe?",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Derived from the Outbreak and Pandemic Preparedness team at the Institute for Health Metrics and Evaluation, University of Washington Contact: pigottdm@uw.edu https://github.com/beoutbreakprepared/nCoV2019"     },
+      "S2": {
+          "Name":"Case_Rates_by_Age_Death?",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Derived from the Outbreak and Pandemic Preparedness team at the Institute for Health Metrics and Evaluation, University of Washington Contact: pigottdm@uw.edu https://github.com/beoutbreakprepared/nCoV2019"     },
+      "S3": {
+          "Name":"Case_Rates_by_Gender_Severe?",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Derived from the Outbreak and Pandemic Preparedness team at the Institute for Health Metrics and Evaluation, University of Washington Contact: pigottdm@uw.edu https://github.com/beoutbreakprepared/nCoV2019"     },
+      "S4": {
+          "Name":"Case_Rates_by_Gender_Death?",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Derived from the Outbreak and Pandemic Preparedness team at the Institute for Health Metrics and Evaluation, University of Washington Contact: pigottdm@uw.edu https://github.com/beoutbreakprepared/nCoV2019"     },
+      "S5": {
+          "Name":"Case_Rates_Recovered",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"WHO Health Emergency Dashboard https://covid19.who.int/"     },
+      "S6": {
+          "Name":"Tests_total?",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Institute for Health Metrics and Evaluation, University of Washington: http://www.healthdata.org/covid/data-downloads"     },
+      "S7": {
+          "Name":"Tests_positive?",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"_INPUT_"     },
+      "S8": {
+          "Name":"Tests_negetive",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"_INPUT_"     },
+      "S9": {
+          "Name":"Tests_inconclusive",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"_INPUT_"     },
+      "C1": {
+          "Name":"Close_school ",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Institute for Health Metrics and Evaluation, University of Washington: http://www.healthdata.org/covid/data-downloads"     },
+      "C2": {
+          "Name":"Close_workplaces",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Thomas Hale, Sam Webster, Anna Petherick, Toby Phillips, and Beatriz Kira. (2020). Oxford COVID-19 Government Response Tracker. Blavatnik School of Government. See	https://github.com/OxCGRT/covid-policy-tracker/"     },
+      "C3": {
+          "Name":"Cancel_events",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Thomas Hale, Sam Webster, Anna Petherick, Toby Phillips, and Beatriz Kira. (2020). Oxford COVID-19 Government Response Tracker. Blavatnik School of Government. See	https://github.com/OxCGRT/covid-policy-tracker/"     },
+      "C4": {
+          "Name":"Limit_gathering_size",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Thomas Hale, Sam Webster, Anna Petherick, Toby Phillips, and Beatriz Kira. (2020). Oxford COVID-19 Government Response Tracker. Blavatnik School of Government. See	https://github.com/OxCGRT/covid-policy-tracker/"     },
+      "C5": {
+          "Name":"Close_transit_public",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Thomas Hale, Sam Webster, Anna Petherick, Toby Phillips, and Beatriz Kira. (2020). Oxford COVID-19 Government Response Tracker. Blavatnik School of Government. See	https://github.com/OxCGRT/covid-policy-tracker/"     },
+      "C6": {
+          "Name":"Stay_home_requirements",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Thomas Hale, Sam Webster, Anna Petherick, Toby Phillips, and Beatriz Kira. (2020). Oxford COVID-19 Government Response Tracker. Blavatnik School of Government. See	https://github.com/OxCGRT/covid-policy-tracker/"     },
+      "C7": {
+          "Name":"Limit_movement",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Thomas Hale, Sam Webster, Anna Petherick, Toby Phillips, and Beatriz Kira. (2020). Oxford COVID-19 Government Response Tracker. Blavatnik School of Government. See	https://github.com/OxCGRT/covid-policy-tracker/"     },
+      "C8": {
+          "Name":"Limit_international_travel",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Thomas Hale, Sam Webster, Anna Petherick, Toby Phillips, and Beatriz Kira. (2020). Oxford COVID-19 Government Response Tracker. Blavatnik School of Government. See	https://github.com/OxCGRT/covid-policy-tracker/"     },
+      "E1": {
+          "Name":"Econ_support_debt",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Thomas Hale, Sam Webster, Anna Petherick, Toby Phillips, and Beatriz Kira. (2020). Oxford COVID-19 Government Response Tracker. Blavatnik School of Government. See	https://github.com/OxCGRT/covid-policy-tracker/"     },
+      "E3": {
+          "Name":"Econ_support_econ",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Thomas Hale, Sam Webster, Anna Petherick, Toby Phillips, and Beatriz Kira. (2020). Oxford COVID-19 Government Response Tracker. Blavatnik School of Government. See	https://github.com/OxCGRT/covid-policy-tracker/"     },
+      "E2": {
+          "Name":"Econ_support_income",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Thomas Hale, Sam Webster, Anna Petherick, Toby Phillips, and Beatriz Kira. (2020). Oxford COVID-19 Government Response Tracker. Blavatnik School of Government. See	https://github.com/OxCGRT/covid-policy-tracker/"     },
+      "E4": {
+          "Name":"Econ_support_allies",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Thomas Hale, Sam Webster, Anna Petherick, Toby Phillips, and Beatriz Kira. (2020). Oxford COVID-19 Government Response Tracker. Blavatnik School of Government. See	https://github.com/OxCGRT/covid-policy-tracker/"     },
+      "H1": {
+          "Name":"Health_engage_public",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Thomas Hale, Sam Webster, Anna Petherick, Toby Phillips, and Beatriz Kira. (2020). Oxford COVID-19 Government Response Tracker. Blavatnik School of Government. See	https://github.com/OxCGRT/covid-policy-tracker/"     },
+      "H2": {
+          "Name":"Health_policy_testing",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Thomas Hale, Sam Webster, Anna Petherick, Toby Phillips, and Beatriz Kira. (2020). Oxford COVID-19 Government Response Tracker. Blavatnik School of Government. See	https://github.com/OxCGRT/covid-policy-tracker/"     },
+      "H3": {
+          "Name":"Health_policy_contact_tracing ",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Thomas Hale, Sam Webster, Anna Petherick, Toby Phillips, and Beatriz Kira. (2020). Oxford COVID-19 Government Response Tracker. Blavatnik School of Government. See	https://github.com/OxCGRT/covid-policy-tracker/"     },
+      "H4": {
+          "Name":"Health_support_healthcare",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Thomas Hale, Sam Webster, Anna Petherick, Toby Phillips, and Beatriz Kira. (2020). Oxford COVID-19 Government Response Tracker. Blavatnik School of Government. See	https://github.com/OxCGRT/covid-policy-tracker/"     },
+      "H5": {
+          "Name":"Health_support_vaccination",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Thomas Hale, Sam Webster, Anna Petherick, Toby Phillips, and Beatriz Kira. (2020). Oxford COVID-19 Government Response Tracker. Blavatnik School of Government. See	https://github.com/OxCGRT/covid-policy-tracker/"     },
+      "F1": {
+          "Name":"Hsptl_Beds",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"This data is often incomplete. Unless otherwise stated in a specific country case, this data was drawn from the Institute for Health Metrics and Evaluation, University of Washington: http://www.healthdata.org/covid/data-downloads"     },
+      "F2": {
+          "Name":"Hsptl_location",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":" World Health Organization's Public Sector Health Facilities database: https://www.who.int/malaria/areas/surveillance/public-sector-health-facilities-ss-africa/en/ The excel file itself can be directly obtained here: https://github.com/worldbank/WB_COVID_Response/wiki/Annotated-Bibliography"     },
+      "F3": {
+          "Name":"Hsptl_icu",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"This data is often incomplete. Unless otherwise stated in a specific country case, this data was drawn from the Institute for Health Metrics and Evaluation, University of Washington: http://www.healthdata.org/covid/data-downloads"     },
+      "F4": {
+          "Name":"Hsptl_respirators",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"This data is often incomplete. Unless otherwise stated in a specific country case, this data was drawn from the Institute for Health Metrics and Evaluation, University of Washington: http://www.healthdata.org/covid/data-downloads"     },
+      "F5": {
+          "Name":"Hsptl_doctors",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"This data is often incomplete. Unless otherwise stated in a specific country case, this data was drawn from the Institute for Health Metrics and Evaluation, University of Washington: http://www.healthdata.org/covid/data-downloads"     },
+      "F6": {
+          "Name":"Hsptl_nurses",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"This data is often incomplete. Unless otherwise stated in a specific country case, this data was drawn from the Institute for Health Metrics and Evaluation, University of Washington: http://www.healthdata.org/covid/data-downloads"     },
+      "F7": {
+          "Name":"Hsptl_supply_ppe",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"This data is often incomplete. Unless otherwise stated in a specific country case, this data was drawn from the Institute for Health Metrics and Evaluation, University of Washington: http://www.healthdata.org/covid/data-downloads"     },
+      "F8": {
+          "Name":"Hsptl_supply_tests",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"This data is often incomplete. Unless otherwise stated in a specific country case, this data was drawn from the Institute for Health Metrics and Evaluation, University of Washington: http://www.healthdata.org/covid/data-downloads"     },
+      "M12": {
+          "Name":"Percent_change_sentiment",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"WBG DECAT analysis of GDELT, Twitter and other social media positings intended to assess the popultion's attitude toward a particular topic, in this case compliance with Non Pharmaceutical Interventions. See Sam Fraiberger at  sfraiberger@worldbank.org"  },
+      "R1": {
+          "Name":"Fraym",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Fraym https://go.fraym.io/coviddatafraym This is Fraym's assessment of the places and populations most at risk from COVID-19 based on their available data and an equal weighting of the risk factors. This model does not consider the available capacity to respond at these locations. "     },
+      "R3": {
+          "Name":"DLR",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"Deutsches Zentrum für Luft- und Raumfahr (German Aerospace Center
+)'s assessment of building height/volume in a given city block. This is an input to a model by Somik Lall and Maria Soppelsa, and implimented by Guarav Bhardwaj and Benjamin Stewart designed to assess the infrastructure derived limits of physical distancing relative to the population density.  Contact Dr.-Ing. Mattia Marconcini mattia.marconcini@dlr.de for technical details on methods of production of the building volume assessment and Somik Lall and Ben Stewart for technical details on methods of analytical application."     },
+      "R4": {
+          "Name":"DHS",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"The DHS Program STATcompiler makes custom tables based on demographic and health surveys in 90+ countries: https://www.statcompiler.com/en/"     },
+      "R5": {
+          "Name":"Census",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"WB derivative of publically availalbe national census datasets"     },
+      "R6": {
+          "Name":"Unacast",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"_INPUT_"     },
+      "R7": {
+          "Name":"Xmode",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"_INPUT_"     },
+      "R8": {
+          "Name":"Cubiq",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"_INPUT_"     },
+      "R9": {
+          "Name":"Facebook",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"_INPUT_"     },
+      "R10": {
+          "Name":"WorldPop",
+          "raster_file":"WP_2020_1km.tif",
+          "vars":["SUM"],
+          "description":"Tatem, Andrew J. 2017 'WorldPop, open data for spatial demography' Scientific Data, 170004,vol. 4, Issue 1 - High resolution, contemporary data on human population distributions, their characteristics and changes over time are a prerequisite for the accurate measurement of the impacts of population growth, for monitoring changes and for planning interventions. WorldPop aims to meet these needs through the provision of detailed and open access spatial demographic datasets built using transparent approaches. The Scientific Data WorldPop collection brings together descriptor papers on these datasets and is introduced here. SN  - 2052-4463 https://doi.org/10.1038/sdata.2017.4"     },
+      "V2": {
+          "Name":"PM25",
+          "raster_file":"_INPUT_",
+          "vars":["_INPUT_"],
+          "description":"_INPUT_"     }
+}

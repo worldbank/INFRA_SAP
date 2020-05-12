@@ -3,13 +3,20 @@ Process OSM files to extract specific data types
 '''
 
 import os, sys, time, subprocess, argparse, logging
+import osmium
 
 import geopandas as gpd
 import osmnx as ox
 import pandas as pd
 import networkx as nx
+import shapely.wkb as wkblib
 
-from shapely.geometry import box
+from shapely.geometry import box, LineString, Point
+from shapely.ops import transform
+from functools import partial
+
+wkbfab = osmium.geom.WKBFactory()
+
 
 # Highway features are reclassified to 4 OSMLR classes for simplification and standardization
 #   https://mapzen.com/blog/osmlr-2nd-technical-preview/
@@ -35,6 +42,127 @@ OSMLR_Classes = {
 "service": "OSMLR level 4"
 }
 
+# extract directly through osmium
+class InfraExtractor(osmium.SimpleHandler):
+    """ Extractor for use in osmium SimpleHandler to extract nodes and highways
+    """
+    def __init__(self, verbose=False):
+        ''' Extract nodes representing ports and international airports
+        '''
+        osmium.SimpleHandler.__init__(self)
+        self.verbose = verbose
+        self.ports = []
+        self.airports = []  
+        self.railways = []
+        self.rail_stations = []
+        self.bridges = []
+        self.highways = []
+        
+    def node(self, n):
+        if n.tags.get('aeroway') == 'aerodrome':
+            wkb = wkbfab.create_point(n)
+            shp = wkblib.loads(wkb, hex=True)
+            self.airports.append([n.id, shp, shp.x, shp.y, n.tags.get('aerodrome:type'), n.tags.get('name'), n.tags.get('name:en')])
+        if n.tags.get('harbour') == "yes":
+            wkb = wkbfab.create_point(n)
+            shp = wkblib.loads(wkb, hex=True)
+            self.ports.append([n.id, shp, shp.x, shp.y])
+        if n.tags.get('railway') == "station":
+            wkb = wkbfab.create_point(n)
+            shp = wkblib.loads(wkb, hex=True)
+            self.rail_stations.append([n.id, shp, n.tags.get("name")])
+        if n.tags.get('bridge'):
+            wkb = wkbfab.create_point(n)
+            shp = wkblib.loads(wkb, hex=True)
+            self.bridges.append([n.id, shp.x, shp.y, n.tags.get("name")])
+    
+    def way(self, n):
+        if n.tags.get("railway"):
+            try:
+                wkb = wkbfab.create_linestring(n)
+                shp = wkblib.loads(wkb, hex=True)
+                self.railways.append([n.id, shp, n.tags.get("name")])
+            except:
+                pass
+        if n.tags.get('aeroway') == 'aerodrome':
+            try:
+                wkb = wkbfab.create_multipolygon(n)
+            except:
+                wkb = wkbfab.create_linestring(n)
+            shp = wkblib.loads(wkb, hex=True)
+            self.airports.append([n.id, shp, shp.centroid.x, shp.centroid.y, n.tags.get('aerodrome:type'), n.tags.get('name'), n.tags.get('name:en')])
+        if n.tags.get('harbour') == "yes":
+            try:
+                wkb = wkbfab.create_multipolygon(n)
+            except:
+                wkb = wkbfab.create_linestring(n)
+            shp = wkblib.loads(wkb, hex=True)
+            self.ports.append([n.id, shp, shp.centroid.x, shp.centroid.y])
+        if n.tags.get("highway"):
+            try:
+                nodes = [x.ref for x in n.nodes]
+                wkb = wkbfab.create_linestring(n)
+                shp = wkblib.loads(wkb, hex=True)
+                info = [n.id, nodes, shp, n.tags['highway']]
+                self.highways.append(info)
+            except:
+                nodes = [x for x in n.nodes if x.location.valid()]
+                if len(nodes) > 1:
+                    shp = LineString([Point(x.location.x, x.location.y) for x in nodes])
+                    info = [n.id, nodes, shp, n.tags['highway']]
+                    self.highways.append(info)
+                
+def check_international(x):
+    try:
+        if x['TYPE'].upper() == "International".upper():
+            return("International")
+        elif "International" in x['Name']:
+            return("International")
+        elif "International" in x['NameEN']:
+            return("International")
+        else:
+            return(x['TYPE'])
+    except:
+        return(x['TYPE'])
+    
+def load_pois(osm_file, exact_bounds):
+    h = InfraExtractor()
+    h.apply_file(osm_file, locations=True)
+    
+    airports = pd.DataFrame(h.airports, columns=["OSM_ID", 'geometry', 'x', 'y', "TYPE", "Name", "NameEN"])
+    airports_geom = [Point(x) for x in zip(airports['x'], airports['y'])]
+    airports.drop(['geometry'], axis=1, inplace=True)
+    airports = gpd.GeoDataFrame(airports, geometry=airports_geom, crs={'init':'epsg:4326'})
+    airports = airports[airports.intersects(exact_bounds)]
+    airports['TYPE2'] = airports.apply(lambda x: check_international(x), axis=1)
+    
+    ports =    pd.DataFrame(h.ports, columns=["OSM_ID",'geometry', 'x', 'y'])
+    ports_geom = [Point(x) for x in zip(ports['x'], ports['y'])]
+    ports.drop(['geometry'], axis=1, inplace=True)    
+    ports =    gpd.GeoDataFrame(ports, geometry=ports_geom, crs={'init':'epsg:4326'})
+    ports =    ports[ports.intersects(exact_bounds)]
+    
+    rails = pd.DataFrame(h.railways, columns=["ID","geometry", "name"])
+    rails = gpd.GeoDataFrame(rails, geometry="geometry", crs={'init':'epsg:4326'})
+    rails = rails[rails.intersects(exact_bounds)]
+    
+    stations = pd.DataFrame(h.rail_stations, columns=['ID','geometry','name'])
+    stations = gpd.GeoDataFrame(stations, geometry="geometry", crs={'init':'epsg:4326'})
+    stations = stations[stations.intersects(exact_bounds)]
+    
+    highways = pd.DataFrame(h.highways, columns=["ID","nodes","geometry","type"])
+    highways = gpd.GeoDataFrame(highways, geometry="geometry", crs={'init':'epsg:4326'})
+    highways.drop(['nodes'], axis=1, inplace=True)
+    highways['OSMLR'] = highways['type'].map(OSMLR_Classes)
+    
+    return({
+        'airports':airports,
+        'ports':ports,
+        'railways':rails,
+        'rail_stations':stations,
+        'highways':highways
+    })
+
 class osmExtraction(object):
     '''
     Download and installation instructions and basic usage can be found here
@@ -46,7 +174,7 @@ class osmExtraction(object):
             stable version of osmosis (link above)
         '''
         self.osmosisCommand = osmosisCmd
-        self.tempFile = tempFile
+        self.tempFile = tempFile        
     
     def extractAmmenities(self, inPbf, outFile, amenityList=["amenity.school"], bounds=[], execute=False):
         ''' Read input osmpbf, extract all buildings and spit out to shapefile
