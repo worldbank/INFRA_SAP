@@ -1,4 +1,4 @@
-import sys, os, importlib
+import sys, os, importlib, time, copy
 import rasterio
 
 import numpy as np
@@ -10,7 +10,10 @@ import skimage.graph as graph
 
 from rasterio.mask import mask
 from rasterio import features
-from shapely.geometry import box, Point
+from shapely.geometry import box, Point, shape
+from shapely.wkt import loads
+from shapely.ops import cascaded_union
+
 from scipy.ndimage import generic_filter
 from pandana.loaders import osm
 
@@ -30,6 +33,9 @@ speed_dict = {
    'living_street':10,
    'service':10
 }
+'''prints the time along with the message'''
+def tPrint(s):
+    print("%s\t%s" % (time.strftime("%H:%M:%S"), s))
 
 def get_speed(x, s_dict):
     try: 
@@ -104,8 +110,7 @@ def calculate_travel_time(inH, traversal_time, destinations, out_raster = ''):
         with rasterio.open(out_raster, 'w', **meta) as out:
             out.write_band(1, costs)
             
-    return(costs)
-    
+    return(costs)    
     
 def get_all_amenities(bounds):
     amenities = ['toilets', 'washroom', 'restroom']
@@ -120,3 +125,96 @@ def get_all_amenities(bounds):
     shp_tags = '"shop"~"{}"'.format('|'.join(amenities))
     shops = get_nodes(inH.bounds, shp_tags)
     
+    
+def generate_feature_vectors(network_r, mcp, inH, threshold, verbose=True):
+    ''' Generate individual market sheds for each feature in the input dataset
+    
+    INPUTS
+        network_r [rasterio] - raster from which to grab index for calculations in MCP
+        mcp [skimage.graph.MCP_Geometric] - input graph
+        inH [geopandas data frame] - geopandas data frame from which to calculate features
+        threshold [list of int] - travel treshold from which to calculate vectors in units of graph
+        
+    RETURNS
+        [geopandas dataframe]
+    '''
+    n = inH.shape[0]
+    feat_count = 0
+    complete_shapes = []
+    for idx, row in inH.iterrows():
+        feat_count = feat_count + 1
+        if verbose:
+            tPrint(f"{feat_count} of {n}")
+        cur_idx = network_r.index(row['geometry'].x, row['geometry'].y)
+        if cur_idx[0] > 0 and cur_idx[1] > 0 and cur_idx[0] < network_r.shape[0] and cur_idx[1] < network_r.shape[1]:
+            costs, traceback = mcp.find_costs([cur_idx])
+            for thresh in threshold:
+                within_time = ((costs < thresh) * 1).astype('int16')
+                all_shapes = []
+                for cShape, value in features.shapes(within_time, transform = network_r.transform):
+                    if value == 1.0:
+                        all_shapes.append([shape(cShape)])
+                complete_shape = cascaded_union([x[0] for x in all_shapes])
+                complete_shapes.append([complete_shape, thresh, feat_count])
+    final = gpd.GeoDataFrame(complete_shapes, columns=["geometry", "threshold", "IDX"], crs=network_r.crs)
+    return(final)
+    
+def generate_market_sheds(img, mcp, inH, out_file = '', verbose=True):
+    ''' identify pixel-level maps of market sheds based on travel time
+    
+    INPUTS
+        network_r [rasterio] - raster from which to grab index for calculations in MCP
+        mcp [skimage.graph.MCP_Geometric] - input graph
+        inH [geopandas data frame] - geopandas data frame from which to calculate features
+        
+    RETURNS
+        [numpy array]
+    '''
+    dests_geom = [img.index(x.x, x.y) for x in inH['geometry']]
+    all_c = []
+    n = inH.shape[0]
+    idx = 0
+    for dest in dests_geom:
+        idx += 1
+        if dest[0] > 0 and dest[0] < img.shape[0] and dest[1] > 0 and dest[1] < img.shape[1]:
+            if verbose:
+                tPrint(f"{idx} of {n}")
+            c1, trace = mcp.find_costs([dest])
+            all_c.append(copy.deepcopy(c1))
+        else:
+            tPrint(f"{idx} of {n} cannot be processed")
+    if verbose:
+        tPrint("Finished calculating access")
+    # Iterate through results to generate final marketshed
+    output = np.zeros(all_c[0].shape)
+    for idx in range(0, len(all_c)):
+        cur_res = all_c[idx]
+        if idx == 0:
+            min_res = cur_res
+        else:
+            combo = np.dstack([min_res, cur_res])
+            min_res = np.amin(combo, 2)
+            cur_val = (min_res == cur_res).astype(np.byte)
+            m_idx = np.where(cur_val == 1)
+            output[m_idx] = idx
+    '''
+    res = np.dstack(all_c)
+    res_min = np.amin(res, axis=2)
+    output = np.zeros([res_min.shape[0], res_min.shape[1]])
+    for idx in range(0, res.shape[2]):
+        cur_data = res[:,:,idx]
+        cur_val = (cur_data == res_min).astype(np.byte) * idx
+        output = output + cur_val
+    output = output.astype(np.byte)
+    def get_min_axis(x):
+        return(np.where(x == x.min()))
+    res_min = np.apply_along_axis(get_min_axis, 2, res)
+    '''        
+    if verbose:
+        tPrint("Finished calculating pixel-level marketsheds")
+    if out_file != '':
+        meta = img.meta.copy()
+        output = output.astype(meta['dtype'])
+        with rasterio.open(out_file, 'w', **meta) as outR:
+            outR.write_band(1, output)
+    return(output)

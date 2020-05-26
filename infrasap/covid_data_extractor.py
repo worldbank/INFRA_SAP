@@ -21,7 +21,7 @@ import GOSTRocks.Urban.UrbanRaster as urban
 vul_def = {'0-5'  :0.001,
            '6-10' :0.001,
            '11-15':0.001,
-           '16-20':0.002,0
+           '16-20':0.002,
            '21-25':0.005,
            '26-30':0.010,
            '31-35':0.016,
@@ -344,7 +344,7 @@ def main():
     countries = inD['NOTHING'].iloc[1:].values
     nCountries = len(countries)
     idx = 0
-    #countries = ['IDN']
+    countries = ['PER','MEX','PHL']
     for iso3 in countries:
         # extract national bounds
         misc.tPrint("Processing %s of %s: %s" % (idx, nCountries, iso3))
