@@ -10,18 +10,18 @@ OBJECTID	Postal	Lat	Lng	Type
 9	"Necochea,Argentina"	-38.5545	-58.73961	Bulk
 10	"Freeport Bahamas,Bahamas"	26.53333	-78.7	General
 11	"Chittagong,Bangladesh"	22.3384	91.83168	General
-12	"Mongla (Chalna),Bangladesh"	-999	-999	Bulk
+12	"Mongla (Chalna),Bangladesh"	22.4889	89.5958	Bulk
 13	"Cotonou,Benin"	6.36536	2.41833	General
 14	"Santos,Brazil"	-23.96083	-46.33361	General
 15	"Paranagua,Brazil"	-25.51626	-48.52537	General
 16	"Itapoa,Brazil"	-26.11694	-48.61611	General
 17	"Rio Grande,Brazil"	-22.90642	-43.18223	General
-18	"Itajaí,Brazil"	-26.90778	-48.66194	General
-19	"Suape (Recife),Brazil"	-999	-999	General
-20	"Pecém  (near Fortaleza),Brazil"	-999	-999	General
+18	"ItajaÃ­,Brazil"	-26.90778	-48.66194	General
+19	"Suape (Recife),Brazil"	-8.0556	-34.8911  General
+20	"PecÃ©m  (near Fortaleza),Brazil"	-3.533611	-38.785833	General
 21	"Rio de Janeiro,Brazil"	-22.90642	-43.18223	General
 22	"Salvador de Bahia,Brazil"	-12.97111	-38.51083	General
-23	"Ponta da Madeira,Brazil"	-999	-999	Bulk
+23	"Ponta da Madeira,Brazil"	-2.565	-44.37	Bulk
 24	"Ponta do Ubu,Brazil"	-999	-999	Bulk
 25	"Sepetiba,Brazil"	-22.97931	-43.69794	Bulk
 26	"Tubarao,Brazil"	-28.46667	-49.00694	Bulk
@@ -39,17 +39,17 @@ OBJECTID	Postal	Lat	Lng	Type
 38	"Santa Marta,Colombia"	11.24079	-74.19904	General
 39	"Barranquilla,Colombia"	10.96854	-74.78132	General
 40	"Puerto Bolivar,Colombia"	12.24107	-71.96242	Bulk
-41	"Puerto Prodeco,Colombia"	-999	-999	Bulk
+41	"Puerto Prodeco,Colombia"	11.069476	-74.215606	Bulk
 42	"Mutsamudu,Comoros"	-12.16672	44.39944	General
 43	"Moroni,Comoros"	-11.70216	43.25506	Bulk
 44	"Puerto Limon,Costa Rica"	9.99074	-83.03596	General
 45	"Caldera,Costa Rica"	9.93319	-84.72058	General
-46	"San Pedro,Cote d'Ivoire"	-999	-999	General
-47	"Abidjan,Cote d'Ivoire"	-999	-999	General
+46	"San Pedro,Cote d'Ivoire"	4.738764	-6.61875	General
+47	"Abidjan,Cote d'Ivoire"	5.28924	-4.011183	General
 48	"Rijeka,Croatia"	45.32673	14.44241	General
 49	"Ploce,Croatia"	43.05611	17.43278	General
 50	"Djibouti,Djibouti"	11.58901	43.14503	General
-51	"Haina Port,Dominican Republic"	-999	-999	General
+51	"Haina Port,Dominican Republic"	18.419935	-70.015768	General
 52	"Guayaquil,Ecuador"	-2.19616	-79.88621	General
 53	"Alexandria,Egypt"	31.20176	29.91582	General
 54	"Port Said,Egypt"	31.26531	32.3019	General
@@ -61,7 +61,7 @@ OBJECTID	Postal	Lat	Lng	Type
 60	"Tema,Ghana"	5.6698	-0.01657	General
 61	"Santo Tomas de Castilla,Guatemala"	15.59981	-88.57019	General
 62	"Puerto Barrios,Guatemala"	15.72778	-88.59444	General
-63	"Puerto Quetzal,Guatemala"	-999	-999	General
+63	"Puerto Quetzal,Guatemala"	13.921932	-90.793479	General
 64	"Conakry,Guinea"	9.53795	-13.67729	General
 65	"Kamsar,Guinea"	10.65	-14.61667	Bulk
 66	"Port au Prince ,Haiti"	18.54349	-72.33881	General
@@ -72,22 +72,22 @@ OBJECTID	Postal	Lat	Lng	Type
 71	"Cochin,India"	9.93988	76.26022	General
 72	"Tuticorin,India"	8.76735	78.13425	General
 73	"Mangalore,India"	12.91723	74.85603	General
-74	"Jawaharlal Nehru,India"	-999	-999	General
+74	"Jawaharlal Nehru,India"	18.9499471	72.949817	General
 75	"Paradip,India"	20.31641	86.6085	Bulk
 76	"Kakinada,India"	16.96036	82.23809	Bulk
 77	"Ennore,India"	13.24751	80.32835	Bulk
 78	"Quilon,India"	8.88113	76.58469	Bulk
 79	"Calicut,India"	11.24802	75.7804	Bulk
-80	"Mormogoa,India"	-999	-999	Bulk
+80	"Mormogoa,India"	15.413885	73.791802	Bulk
 81	"Mumbai,India"	19.07283	72.88261	Bulk
-82	"Trincomalee,India"	-999	-999	Bulk
+82	"Trincomalee,India"	8.563199	81.199734	Bulk
 83	"Kandla,India"	23.03333	70.21667	Bulk
 84	"Belawan ,Indonesia"	3.7755	98.6832	General
 85	"Makassar,Indonesia"	-5.14861	119.43194	Bulk
 86	"Balikpapan,Indonesia"	-1.26753	116.82887	Bulk
 87	"Banjarmasin,Indonesia"	-3.31987	114.59075	Bulk
 88	"Kota Baru,Indonesia"	-2.0301	101.4003	Bulk
-89	"Pulau Laut,Indonesia"	-999	-999	Bulk
+89	"Pulau Laut,Indonesia"	-3.292189	116.147801	Bulk
 90	"Port of Kingston,Jamaica"	17.93738	-76.84062	General
 91	"Aqaba,Jordan"	29.52667	35.00778	Bulk
 92	"Mombasa,Kenya"	-4.05466	39.66359	General
@@ -115,14 +115,14 @@ OBJECTID	Postal	Lat	Lng	Type
 114	"Corinto,Nicaragua"	12.4825	-87.17304	General
 115	"Lagos,Nigeria"	6.45407	3.39467	General
 116	"Karachi,Pakistan"	24.8608	67.0104	General
-117	"Port Qasim,Pakistan"	-999	-999	General
+117	"Port Qasim,Pakistan"	24.774781	67.329522	General
 118	"Colon,Panama"	9.35451	-79.90011	General
 119	"Cristobal,Panama"	9.35222	-79.90444	General
 120	"Balboa,Panama"	8.94814	-79.56672	General
 121	"Port Moresby ,Papua New Guinea"	-9.47723	147.15089	General
-122	"Port Lae,Papua New Guinea"	-999	-999	General
+122	"Port Lae,Papua New Guinea"	-6.741055	146.985433	General
 123	"Callao,Peru"	-12.05659	-77.11814	General
-124	"San Nicholas,Peru"	-999	-999	Bulk
+124	"San Nicholas,Peru"	-15.258333	-75.239722	Bulk
 125	"Matarani,Peru"	-16.99639	-72.10563	Bulk
 126	"Paita,Peru"	-5.08917	-81.11444	Bulk
 127	"Talara,Peru"	-4.57722	-81.27194	Bulk
@@ -130,13 +130,13 @@ OBJECTID	Postal	Lat	Lng	Type
 129	"Cagayan De Oro,Philippines"	8.48222	124.64722	General
 130	"Davao,Philippines"	7.07306	125.61278	General
 131	"Manila,Philippines"	14.6042	120.9822	General
-132	"Gen Santos,Philippines"	-999	-999	General
+132	"Gen Santos,Philippines"	6.093587	125.156791	General
 133	"Zamboanga,Philippines"	6.91028	122.07389	Bulk
 134	"Surigao,Philippines"	9.789	125.495	Bulk
 135	"Ozamiz,Philippines"	8.1481	123.8405	Bulk
 136	"Nasipit,Philippines"	8.94722	125.35694	Bulk
 137	"Illigan,Philippines"	8.2289	124.24344	Bulk
-138	"Pointe Noir,Republic of Congo"	-999	-999	General
+138	"Pointe Noir,Republic of Congo"	-4.788838	11.828873	General
 139	"Murmansk,Russia"	68.97917	33.09251	Bulk
 140	"Vostochny,Russia"	55.81353	37.71617	Bulk
 141	"Rostov,Russia"	47.23135	39.72328	Bulk
@@ -150,7 +150,7 @@ OBJECTID	Postal	Lat	Lng	Type
 149	"Berbera,Somalia"	10.43959	45.01432	Bulk
 150	"Durban,South Africa"	-29.8579	31.0292	General
 151	"Cape Town,South Africa"	-33.92584	18.42322	General
-152	"Ngqura,South Africa"	-999	-999	General
+152	"Ngqura,South Africa"	-33.806725	25.682251	General
 153	"Richards Bay,South Africa"	-28.78301	32.03768	Bulk
 154	"Saldanha Bay,South Africa"	-33.01167	17.9442	Bulk
 155	"Colombo,Sri Lanka"	6.93548	79.84868	General
@@ -163,14 +163,14 @@ OBJECTID	Postal	Lat	Lng	Type
 162	"Ambarli,Turkey"	40.98272	28.72315	General
 163	"Chornomorsk,Ukraine"	46.29914	30.65529	General
 164	"Odessa,Ukraine"	46.48572	30.74383	General
-165	"Yuzhny,Ukraine"	-999	-999	General
-166	"Illychevsk,Ukraine"	-999	-999	Bulk
+165	"Yuzhny,Ukraine"	46.649511	31.018937	General
+166	"Illychevsk,Ukraine"	46.329356	30.663817	Bulk
 167	"Nikolaev,Ukraine"	46.96591	31.9974	Bulk
 168	"Montevideo,Uruguay "	-34.90328	-56.18816	General
 169	"Danang,Vietnam"	16.06778	108.22083	General
 170	"Hai Phong,Vietnam"	20.86481	106.68345	General
 171	"Ho Chi Minh City,Vietnam"	10.82302	106.62965	General
 172	"Qui Nhon,Vietnam"	13.77648	109.22367	General
-173	"Cai Mep,Vietnam"	-999	-999	General
+173	"Cai Mep,Vietnam"	10.538984	107.030956	General
 174	"Can Tho,Vietnam"	10.03711	105.78825	Bulk
-175	"Bin Minh,Vietnam"	-999	-999	Bulk
+175	"Bin Minh,Vietnam"	10.028923	105.819655	Bulk
