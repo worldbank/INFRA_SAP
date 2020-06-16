@@ -41,7 +41,7 @@ def rasterize_gdf(inD, field, template, outFile=None, nodata=np.nan):
             height = y_pixels, width = x_pixels,
             count=1, dtype=str(inD[field].dtype),
             crs=raster_template.crs,
-            transform=trans, nodata=nodata
+            transform=trans
         ) as new_dataset:
             new_dataset.write_band(1, burned)
     else:
@@ -72,59 +72,27 @@ def pop_weighted_average(target, data_raster, pop_raster, new_field):
     
     # Calculate weights
     zs_sum_pop = pd.DataFrame(zonal_stats(target, pop_array, affine=pop.transform, stats='sum', nodata=pop.nodata)).rename(columns={'sum':'pop_sum'})
-    target_temp = target.join(zs_sum_pop)
-    pop_sum_array = rasterize_gdf(inD=target_temp, field='pop_sum',template=pop_raster)
+    target = target.join(zs_sum_pop)
+    pop_sum_array = rasterize_gdf(inD=target, field='pop_sum',template=pop_raster)
     weights = pop_array/pop_sum_array
     
     # Apply weights
-    data = rio.open(data_raster).read(1, masked=True)
-    data_weighted = weights*data
+    data = rio.open(data_raster).read(1)
+    data_weighted = data*weights
     
-    zs_sum_data = pd.DataFrame(zonal_stats(target, data_weighted.filled(), affine=pop.transform, stats='sum', nodata=pop.nodata)).rename(columns={'sum':new_field})
+    zs_sum_data = pd.DataFrame(zonal_stats(target, data_weighted, affine=pop.transform, stats='sum', nodata=pop.nodata)).rename(columns={'sum':new_field})
     
     target = target.join(zs_sum_data)
     return target
 
-def pop_weighted_average_national(data_raster, pop_raster, label, table=None):
-    '''Calculate population weighted average from a raster dataset to a target shapefile
-    
-    INPUT
-    data_raster [ path ]
-    pop_raster [ path ]
-    new_field [ string ] -
-    
-    RETURNS
-    Target GDF with new fields
-    '''    
-    pop = rio.open(pop_raster)
-    pop_crs = pop.crs.to_string()
-    pop_array = pop.read(1, masked=True)
-    
-    # Calculate weights
-    pop_sum_array = pop_array.sum()
-    weights = pop_array/pop_sum_array
-    
-    # Apply weights
-    data = rio.open(data_raster).read(1, masked=True)
-    data_weighted = weights*data
-    
-    sum_data = data_weighted.sum()
-    results = pd.DataFrame(data = [sum_data], index = [label], columns = ['pop weighted average'])
-    if table is not None:
-        table = pd.concat([table, results])
-        return table
-    else:
-        return results
-
-def calculate_access_percentages(OD, target, dest_type, rural=False, urban_extents=None, pop_threshold=None, thresholds=[0,30,60,120,180,240,300,360,2000], capital=None):
+def calculate_access_percentages(OD, target, dest_type, rural=False, urban_extents=None thresholds=[0,30,60,120,180,240,300,360,2000]):
     
     if type(target) == str:
         target = gpd.read_file(target).reset_index(drop=True)
+    
     if type(OD) == str:
         OD = pd.read_csv(OD, header=[0,1], index_col=0)
-    if type(urban_extents) == str:
-        urban_extents = gpd.read_file(urban_extents)
-    
+        
     origins_geom = OD['origin'][['geometry']].copy()
     origins_geom.loc[:,'geometry'] = origins_geom['geometry'].apply(lambda x: loads(x))
     origins_geom = gpd.GeoDataFrame(origins_geom, crs = 'EPSG:4326', geometry='geometry')
@@ -135,36 +103,17 @@ def calculate_access_percentages(OD, target, dest_type, rural=False, urban_exten
     if rural:
         origins_sj2 = gpd.sjoin(origins_geom, urban_extents, how='left', op='intersects')
         OD.loc[:,('origin','rural')] = origins_sj2['index_right'].apply(lambda x: 1 if pd.isna(x) else 0)
-        OD = OD.loc[OD[('origin','rural')] == 1].copy()
-    
-    OD_dest = OD[dest_type]
-    if pop_threshold:
-        major_cities = [str(x) for x in urban_extents.loc[urban_extents.Pop>=pop_threshold].index]
-        OD_dest = OD_dest.loc[:,major_cities]
-    if capital:
-        OD_dest = OD_dest.loc[:,[capital]]
-    
-    min_df = OD['origin'].join(pd.DataFrame(OD_dest.min(axis=1).apply(lambda x: (x/60)), columns=["tt_min"]))
+        # drop all ourban points, still need to check that this works
+        OD = OD.loc[OD[('origin','rural')] == 1].copy()        
+        
+    min_df = OD['origin'].join(pd.DataFrame(OD[dest_type].min(axis=1).apply(lambda x: (x/60)), columns=["tt_min"]))
     min_df = min_df.loc[~pd.isna(min_df.target_idx)]
     min_df.loc[:,"target_idx"] = min_df.target_idx.astype(int)
     min_df.loc[:,'tt_min_cut'] = pd.cut(min_df.tt_min, bins=thresholds)
     
-    summary = min_df.groupby(['target_idx','tt_min_cut'])[['grid_code']].sum().unstack().fillna(0)
-    summary.columns = summary.columns.get_level_values(1)
-    summary_pct = summary.apply(lambda x: x/(summary.sum(axis=1))).fillna(0)
-#     summary_pct.columns = summary_pct.columns.get_level_values(1)
-    results = target.join(summary_pct).join(summary, rsuffix=' pop')
+    summary = min_df.groupby(['target_idx','tt_min_cut'])[['grid_code']].sum().unstack()
+    summary_pct = summary.apply(lambda x: x/(summary.sum(axis=1)))
+    summary_pct.columns = summary_pct.columns.get_level_values(1)
+    results = target.join(summary_pct)
     
     return results
-
-def agregate_to_country(summary, indicator, table=None):
-    
-    pop_cols = summary.columns[['pop' in x for x in summary.columns]]
-    national = summary[pop_cols].sum(axis=0)
-    national_pct = pd.DataFrame(national.apply(lambda x: x/(national.sum())), columns=[indicator]).transpose()
-    
-    if table is not None:
-        table = pd.concat([table, national_pct])
-        return table
-    else:
-        return national_pct

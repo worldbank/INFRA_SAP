@@ -95,13 +95,70 @@ class comtrade_flow(object):
         self.country_flows = country_flows
         self.country_summary = country_summary
         
-    def save_individual_layers(self, out_folder, out_type="SHP"):
+    def save_simple_layers(self, out_folder, out_type="SHP"):
         '''
-        Need to split the country_summary and country_flow into the various commodity types and years
+        Extract the most important layers from the country_flows and country_summary
+        and save to disk in order to put on GIM
         '''
+        if not os.path.exists(out_folder):
+            os.makedirs(out_folder)
+        
+        self.clean_fields()
+        self.country_summary['Value per unit'] = self.country_summary['Trade Value (US$)'] / self.country_summary['Qty']
+        self.country_flows['Value per unit'] = self.country_flows['Trade Value (US$)'] / self.country_flows['Qty']
         
         
-    
+        # Summarize country summaries
+        agg = self.country_summary.groupby(['Reporter ISO', "Trade Flow"])
+        most_recent = agg.first().reset_index()
+        most_recent_import = most_recent.loc[most_recent['Trade Flow'] == "Import"]
+        most_recent_export = most_recent.loc[most_recent['Trade Flow'] == "Export"]        
+        # Summarize country summaries
+        agg_flow = self.country_flows.groupby(['Reporter ISO', "Partner ISO", "Trade Flow"])
+        most_recent_flow = agg_flow.first().reset_index()
+        most_recent_import_flow = most_recent_flow.loc[most_recent_flow['Trade Flow'] == "Import"]
+        most_recent_export_flow = most_recent_flow.loc[most_recent_flow['Trade Flow'] == "Export"]
+        
+        if out_type == 'CSV':
+            geom_driver = "CSV"
+            out_type = "csv"
+        elif out_type == "SHP":
+            geom_driver = "ESRI Shapefile"
+            out_type = "shp"
+        elif out_type == "GEOJSON":
+            geom_driver = "GeoJSON"
+            out_type = "geojson"
+                    
+        for fileDef in [[most_recent_import, os.path.join(out_folder, f"country_summary_imports.{out_type}")],
+                        [most_recent_export, os.path.join(out_folder, f"country_summary_exports.{out_type}")],
+                        [most_recent_import_flow, os.path.join(out_folder, f"country_flows_imports.{out_type}")],
+                        [most_recent_export_flow, os.path.join(out_folder, f"country_flows_exports.{out_type}")]]:
+            xx = fileDef[0]
+            xx = gpd.GeoDataFrame(xx, geometry="geometry", crs = {'init':'epsg:4326'})            
+            xx.to_file(fileDef[1], driver=geom_driver)           
+        
+        
+    def clean_fields(self):
+        '''
+        '''
+        #Convert geometry columns to text
+        self.country_flows['Reporter_Pt'] = self.country_flows['Reporter_Pt'].apply(str)
+        self.country_flows['Partner_Pt'] = self.country_flows['Partner_Pt'].apply(str)
+        for n_field in ['Trade Value (US$)', 'Qty']:
+            try:
+                self.country_flows[n_field] = self.country_flows[n_field].astype(float)
+            except:
+                self.country_flows[n_field] = self.country_flows[n_field].replace('','0').astype(float)
+            try:
+                self.country_summary[n_field] = self.country_summary[n_field].astype(float)
+            except:
+                self.country_summary[n_field] = self.country_summary[n_field].replace('','0').astype(float)
+                
+        #Convert country summary columns to geometry
+        if 'Reporter_Pt' in self.country_summary.columns:
+            country_summary_geom = self.country_summary['Reporter_Pt']
+            self.country_summary.drop(['Reporter_Pt'], axis=1, inplace=True)
+            self.country_summary['geometry'] = country_summary_geom   
     
     def save(self, out_folder, out_type = "CSV"):
         '''
@@ -115,23 +172,8 @@ class comtrade_flow(object):
         if not os.path.exists(out_folder):
             os.makedirs(out_folder)
         
-        #Convert geometry columns to text
-        self.country_flows['Reporter_Pt'] = self.country_flows['Reporter_Pt'].apply(str)
-        self.country_flows['Partner_Pt'] = self.country_flows['Partner_Pt'].apply(str)
-        for n_field in ['Trade Value (US$)', 'Qty']:
-            try:
-                self.country_flows[n_field] = self.country_flows[n_field].astype(float)
-            except:
-                self.country_flows[n_field] = self.country_flows[n_field].replace('','0').astype(float)
-            try:
-                self.country_summary[n_field] = self.country_summary[n_field].astype(float)
-            except:
-                self.country_summary[n_field] = self.country_summary[n_field].replace('','0').astype(float)
-        #Convert country summary columns to geometry
-        if 'Reporter_Pt' in self.country_summary.columns:
-            country_summary_geom = self.country_summary['Reporter_Pt']
-            self.country_summary.drop(['Reporter_Pt'], axis=1, inplace=True)
-            self.country_summary['geometry'] = country_summary_geom            
+        self.clean_fields()
+         
         if out_type == 'CSV':
             geom_driver = "CSV"
             out_type = "csv"

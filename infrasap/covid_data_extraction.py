@@ -1,5 +1,5 @@
 import os, sys, importlib, subprocess, copy
-import rasterio
+import rasterio, geohash
 
 import geopandas as gpd
 import pandas as pd
@@ -54,6 +54,13 @@ hnp_categories = {
         'raster_file':'WP2020_vulnerability_map.tif',
         'vars':['SUM'],
         'description':'Total potential hospitalization load based on WorldPop demographics and published CoVID hospitalization rates'
+    },
+    'LC': {
+        'Name':'Landcover',
+        'raster_file':'LC.tif',
+        'vars':['C'],
+        'unqVals':[11,14,20,30,40,50,60,70,90,100,110,120,130,140,150,160,170,180,190,200,210,220,230],
+        'description':'Landcover dataset from Globcover'
     }
 } 
 
@@ -119,7 +126,8 @@ def create_urban_data(iso3, country_folder, country_bounds, inR, calc_urban=True
 
     def create_fishnet(extents_file, out_folder, prefix):
         urban_extents = gpd.read_file(extents_file)
-        sel_cities = urban_extents.sort_values(['Pop'], ascending=False).iloc[0:5]
+        #sel_cities = urban_extents.sort_values(['Pop'], ascending=False).iloc[0:5]
+        sel_cities = urban_extents.sort_values(['Pop'], ascending=False)
         try:
             sel_cities = misc.project_UTM(sel_cities)
         except:
@@ -135,6 +143,7 @@ def create_urban_data(iso3, country_folder, country_bounds, inR, calc_urban=True
                 fishnet = gpd.read_file(out_fishnet)
                 fishnet = fishnet[fishnet.intersects(row['geometry'])]
                 fishnet = fishnet.to_crs({'init':'epsg:4326'})
+                fishnet['geohash'] = fishnet['geometry'].apply(lambda x: geohash.encode(x.centroid.y, x.centroid.x))
                 fishnet.to_file(out_fishnet)
                 if verbose:
                     misc.tPrint("%s: %s" % (prefix, row['ID']))
@@ -216,12 +225,19 @@ def run_zonal(admin_shapes, rasters):
         out_zonal = shp.replace(".shp", "_zonal.shp")
         if not os.path.exists(out_zonal):
             for var_name, definition in rasters.items():
-                # Zonal stats
-                res = rMisc.zonalStats(inD, definition['raster_file'], minVal=0, reProj=True)
-                res = pd.DataFrame(res, columns=['SUM','MIN','MAX','MEAN'])
-                res.columns = [f"{var_name}_{x}" for x in res.columns]
-                for var in definition['vars']:
-                    inD[f"{var_name}_{var}"] = res[f"{var_name}_{var}"]
+                if definition['vars'][0] == 'C':
+                    uVals = definition['unqVals']
+                    res = rMisc.zonalStats(inD, definition['raster_file'], rastType='C', unqVals=uVals, reProj=True)
+                    res = pd.DataFrame(res, columns=['LC_%x' % x for x in uVals])
+                    for column in res.columns:
+                        inD[column] = res[column]
+                else:
+                    # Zonal stats
+                    res = rMisc.zonalStats(inD, definition['raster_file'], minVal=0, reProj=True)
+                    res = pd.DataFrame(res, columns=['SUM','MIN','MAX','MEAN'])
+                    res.columns = [f"{var_name}_{x}" for x in res.columns]
+                    for var in definition['vars']:
+                        inD[f"{var_name}_{var}"] = res[f"{var_name}_{var}"]
             inD.to_file(out_zonal)
  
 def main():
@@ -232,14 +248,17 @@ def main():
     pop_folder = "/home/public/Data/GLOBAL/Population/WorldPop_PPP_2020/GLOBAL_1km_Demographics"
     output_folder = "/home/wb411133/data/Projects/CoVID"
     population_raster = "/home/public/Data/GLOBAL/Population/WorldPop_PPP_2020/ppp_2020_1km_Aggregated.tif" 
+    lcRaster = "/home/public/Data/GLOBAL/LANDCOVER/GLOBCOVER/2015/ESACCI-LC-L4-LCCS-Map-300m-P1Y-2015-v2.0.7.tif"
     # Read in the global datasets
     pop_files = os.listdir(pop_folder)
     inG  = gpd.read_file(global_bounds)
     inG1 = gpd.read_file(global_adm1)
     inG2 = gpd.read_file(global_adm2)
     inR = rasterio.open(population_raster)
+    inL = rasterio.open(lcRaster)
 
-    countries = os.listdir(output_folder)
+    countries = ['IDN']
+    #['COD', 'LAO', 'STP', 'PSE', 'COG', 'AFG', 'BGD', 'BDI', 'CPV', 'KHM', 'DJI', 'ECU', 'ETH', 'GMB', 'GHA', 'HTI', 'IND', 'KEN', 'KGZ', 'MDV', 'MRT', 'MNG', 'NPL', 'PAK', 'PRY', 'RWA', 'SEN', 'SLE', 'LKA', 'TJK', 'YEM', 'ARG', 'LBR', 'MWI', 'MLI', 'NGA', 'PNG', 'DZA', 'BLR', 'BEN', 'BTN', 'BIH', 'BRA', 'BRA', 'BFA', 'NIC', 'TCD', 'CIV', 'EGY', 'SLV', 'SWZ', 'FJI', 'GAB', 'GEO', 'GTM', 'HND', 'IDN', 'JOR', 'LSO', 'MHL', 'MDA', 'MMR', 'MKD', 'PAN', 'PHL', 'WSM', 'SLB', 'TGO', 'TUN', 'TUR', 'UGA', 'URY', 'UZB', 'ALB', 'HRV', 'IRN', 'SRB', 'TTO', 'ATG', 'CMR', 'CHN', 'GIN', 'IRQ', 'KEN', 'SRB', 'NIC', 'NGA']
     nCountries = len(countries)
     idx = 0
     for iso3 in countries:
@@ -250,7 +269,8 @@ def main():
         adm0_file = os.path.join(country_folder, "adm0.shp")
         adm1_file = os.path.join(country_folder, "adm1.shp")
         adm2_file = os.path.join(country_folder, "adm2.shp")
-        
+        lc_file = os.path.join(country_folder, "LC.tif")
+               
         if not os.path.exists(country_folder):
             os.makedirs(country_folder)
         country_bounds = inG.loc[inG['ISO3'] == iso3].to_crs({'init':'epsg:4326'})
@@ -262,13 +282,16 @@ def main():
             country_adm1.to_file(adm1_file)
         if not os.path.exists(adm2_file):
             country_adm2.to_file(adm2_file)
-        
+        if not os.path.exists(lc_file):
+            rMisc.clipRaster(inL, gpd.read_file(adm0_file), lc_file)
+            
         country_bounds = country_bounds.to_crs({'init':'epsg:4326'})
         calculate_vulnerability(iso3, country_folder, country_bounds, pop_folder, pop_files)
         misc.tPrint("***Calculated Vulnerability")
-        try:
-            create_urban_data(iso3, country_folder, country_bounds, inR, calc_urban=False)
-            misc.tPrint("***Calculated Urban Extents")                           
+        #try:
+        create_urban_data(iso3, country_folder, country_bounds, inR, calc_urban=False)
+        misc.tPrint("***Calculated Urban Extents")                           
+        '''
         except:
             misc.tPrint("%s errored on HD clusters" % iso3)
             try:
@@ -276,6 +299,7 @@ def main():
             except:
                 misc.tPrint("%s errored on all clusters" % iso3)        
         #extract_osm(country_bounds, country_folder)
+        '''
         misc.tPrint("***Extracted OSM")
         
         #Run zonal stats

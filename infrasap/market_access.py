@@ -8,12 +8,13 @@ import osmnx as ox
 import GOSTnets as gn
 import skimage.graph as graph
 
+from skimage.graph import _mcp
 from rasterio.mask import mask
 from rasterio import features
 from shapely.geometry import box, Point, shape
 from shapely.wkt import loads
 from shapely.ops import cascaded_union
-
+from scipy import sparse
 from scipy.ndimage import generic_filter
 from pandana.loaders import osm
 
@@ -63,6 +64,19 @@ def get_roads(b):
     sel_roads['speed'] = sel_roads['highway'].apply(lambda x: get_speed(x, speed_dict))
     return(sel_roads)
 
+def get_mcp_dests(inH, destinations):
+    ''' Get indices from inH for use in mcp.find_costs
+    INPUT
+        inH[rasterio] - object from which to extract geographic coordinates
+        destinations[geopandas geodataframe] - point geodataframe of destinations
+    RETURN
+        [list of indices]
+    '''
+    cities = list(set([inH.index(x.x, x.y) for x in destinations['geometry']]))
+    cities = [x for x in cities if ((x[0] > 0) and (x[1] > 0) and 
+                (x[0] <= inH.shape[0]) and (x[1] <= inH.shape[1]))]
+    return(cities)
+    
 def generate_network_raster(inH, sel_roads, min_speed=5, speed_col='speed', resolution=100):   
     ''' Create raster with network travel times from a road network
     
@@ -86,23 +100,19 @@ def generate_network_raster(inH, sel_roads, min_speed=5, speed_col='speed', reso
     traversal_time = resolution / (speed_image * 1000 / (60 * 60)) # km/h --> m/s * resolution of image in metres
     return(traversal_time)
 
-def calculate_travel_time(inH, traversal_time, destinations, out_raster = ''):
+def calculate_travel_time(inH, mcp, destinations, out_raster = ''):
     ''' Calculate travel time raster
     
     INPUTS
         inH [rasterio object] - template raster used to identify locations of destinations
-        traversal_time [numpy array] - describies per pixel seconds to cross
+        mcp [skimage.graph.MCP_Geometric] - input graph
         destinations [geopandas df] - destinations for nearest calculations
         
     LINKS
         https://scikit-image.org/docs/0.7.0/api/skimage.graph.mcp.html#skimage.graph.mcp.MCP.find_costs
     '''
     # create skimage graph
-    mcp = graph.MCP_Geometric(traversal_time)
-    cities = list(set([inH.index(x.x, x.y) for x in destinations['geometry']]))
-    cities = [x for x in cities if ((x[0] > 0) and (x[1] > 0) and 
-                (x[0] <= inH.shape[0]) and (x[1] <= inH.shape[1]))]
-    
+    cities = get_mcp_dests(inH, destinations)
     costs, traceback = mcp.find_costs(cities)        
     if not out_raster == '':
         meta = inH.meta.copy()
@@ -110,7 +120,7 @@ def calculate_travel_time(inH, traversal_time, destinations, out_raster = ''):
         with rasterio.open(out_raster, 'w', **meta) as out:
             out.write_band(1, costs)
             
-    return(costs)    
+    return((costs, traceback))    
     
 def get_all_amenities(bounds):
     amenities = ['toilets', 'washroom', 'restroom']
@@ -159,7 +169,65 @@ def generate_feature_vectors(network_r, mcp, inH, threshold, verbose=True):
     final = gpd.GeoDataFrame(complete_shapes, columns=["geometry", "threshold", "IDX"], crs=network_r.crs)
     return(final)
     
-def generate_market_sheds(img, mcp, inH, out_file = '', verbose=True):
+def generate_market_sheds(inR, inH, out_file='', verbose=True, factor=1000, bandIdx=0):
+    ''' identify pixel-level maps of market sheds based on travel time    
+    INPUTS
+        inR [rasterio] - raster from which to grab index for calculations in MCP
+        inH [geopandas data frame] - geopandas data frame of destinations
+        factor [int] - value by which to multiply raster 
+        
+    RETURNS
+        [numpy array] - marketsheds by index
+        
+    NOTES:
+        Incredible help from StackOverflow:
+        https://stackoverflow.com/questions/62135639/mcp-geometrics-for-calculating-marketsheds
+        https://gist.github.com/bpstewar/9c15fc0948e82aa9667f1b04fd2c0295
+    '''
+    xx = inR.read()[bandIdx,:,:] * factor
+    orig_shape = xx.shape
+    # In order to calculate the marketsheds, the input array needs to be NxN shape, 
+    #   at the end, we will select out the original shape in order to write to file
+    max_speed = xx.max()
+    if xx.shape[0] < xx.shape[1]:
+        extra_size = np.zeros([(xx.shape[1] - xx.shape[0]), xx.shape[1]]) + max_speed
+        new_xx = np.vstack([xx, extra_size])
+        
+    if xx.shape[1] < xx.shape[0]:
+        extra_size = np.zeros([(xx.shape[0] - xx.shape[1]), xx.shape[0]]) + max_speed
+        new_xx = np.hstack([xx, extra_size])        
+    mcp = graph.MCP_Geometric(new_xx)
+    
+    
+    dests = get_mcp_dests(inR, inH)    
+    costs, traceback = mcp.find_costs(dests)
+    
+    offsets = _mcp.make_offsets(2, True)
+    offsets.append(np.array([0, 0]))
+    offsets_arr = np.array(offsets)
+    indices = np.indices(traceback.shape)
+    offset_to_neighbor = offsets_arr[traceback]
+    neighbor_index = indices - offset_to_neighbor.transpose((2, 0, 1))
+    ids = np.arange(traceback.size).reshape(costs.shape)
+    neighbor_ids = np.ravel_multi_index(
+        tuple(neighbor_index), traceback.shape
+    )
+    g = sparse.coo_matrix((
+        np.ones(traceback.size),
+        (ids.flat, neighbor_ids.flat),
+    ), shape=[traceback.size, traceback.size]).tocsr()
+    n, components = sparse.csgraph.connected_components(g)
+    basins = components.reshape(costs.shape)
+    out_basins = basins[:orig_shape[0], :orig_shape[1]]
+    if out_file != '':
+        meta = inR.meta.copy()
+        meta.update(dtype=out_basins.dtype)
+        with rasterio.open(out_file, 'w', **meta) as out_raster:
+            out_raster.write_band(1, out_basins)
+    else:
+        return(out_basins)
+
+def generate_market_sheds_old(img, mcp, inH, out_file = '', verbose=True):
     ''' identify pixel-level maps of market sheds based on travel time
     
     INPUTS

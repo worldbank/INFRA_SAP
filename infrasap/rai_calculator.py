@@ -8,8 +8,8 @@ import pandas as pd
 import GOSTnets as gn
 import GOSTnets.load_osm as losm
 
-from . import GOSTRocks.raster_misc as rMisc
 from . import osm_extractor as osm
+from . import GOSTRocks.rasterMisc as rMisc
 
 from shapely.geometry import box
 
