@@ -47,7 +47,7 @@ def rasterize_gdf(inD, field, template, outFile=None, nodata=np.nan):
     else:
         return burned
     
-def pop_weighted_average(target, data_raster, pop_raster, new_field):
+def pop_weighted_average(target, data_raster, pop_raster, new_field, table=None):
     '''Calculate population weighted average from a raster dataset to a target shapefile
     
     INPUT
@@ -82,8 +82,12 @@ def pop_weighted_average(target, data_raster, pop_raster, new_field):
     
     zs_sum_data = pd.DataFrame(zonal_stats(target, data_weighted, affine=pop.transform, stats='sum', nodata=pop.nodata)).rename(columns={'sum':new_field})
     
-    target = target.join(zs_sum_data)
-    return target
+    if table is not None:
+        table = table.join(zs_sum_data)
+        return table
+    else:
+        target = target.join(zs_sum_data)
+        return target
 
 def calculate_access_percentages(OD, target, dest_type, rural=False, urban_extents=None thresholds=[0,30,60,120,180,240,300,360,2000]):
     
@@ -103,10 +107,16 @@ def calculate_access_percentages(OD, target, dest_type, rural=False, urban_exten
     if rural:
         origins_sj2 = gpd.sjoin(origins_geom, urban_extents, how='left', op='intersects')
         OD.loc[:,('origin','rural')] = origins_sj2['index_right'].apply(lambda x: 1 if pd.isna(x) else 0)
-        # drop all ourban points, still need to check that this works
-        OD = OD.loc[OD[('origin','rural')] == 1].copy()        
-        
-    min_df = OD['origin'].join(pd.DataFrame(OD[dest_type].min(axis=1).apply(lambda x: (x/60)), columns=["tt_min"]))
+        OD = OD.loc[OD[('origin','rural')] == 1].copy()
+    
+    OD_dest = OD[dest_type]
+    if pop_threshold:
+        major_cities = [str(x) for x in urban_extents.loc[urban_extents.Pop>=pop_threshold].index]
+        OD_dest = OD_dest.loc[:,major_cities]
+    if capital:
+        OD_dest = OD_dest.loc[:,[capital]]
+    
+    min_df = OD['origin'].join(pd.DataFrame(OD_dest.min(axis=1), columns=["tt_min"]))
     min_df = min_df.loc[~pd.isna(min_df.target_idx)]
     min_df.loc[:,"target_idx"] = min_df.target_idx.astype(int)
     min_df.loc[:,'tt_min_cut'] = pd.cut(min_df.tt_min, bins=thresholds)
