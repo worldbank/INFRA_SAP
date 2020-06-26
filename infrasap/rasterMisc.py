@@ -143,7 +143,7 @@ def polygonizeArray(data, b, curRaster):
     outGeo.crs = crs
     return(outGeo)
     
-def zonalStats(inShp, inRaster, bandNum=1, mask_A = None, reProj = True, minVal = '', maxVal = '',
+def zonalStats(inShp, inRaster, bandNum=1, mask_A = None, reProj = False, minVal = '', maxVal = '',
                 verbose=False , rastType='N', unqVals=[], weighted=False, allTouched=False):
     ''' Run zonal statistics against an input shapefile. Returns array of SUM, MIN, MAX, and MEAN
 

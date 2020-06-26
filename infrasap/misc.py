@@ -160,7 +160,7 @@ def tabulateUnq(unqResults, verbose=False, columnPrefix="c"):
             print (r)
         allRes.append(curRes)
     return pd.DataFrame(allRes, columns=["%s_%s" % (columnPrefix, xxx) for xxx in unq])    
-    
+
 def createFishnet(outputGridfn,xmin,xmax,ymin,ymax,gridHeight,gridWidth,crsNum=4326):
     ''' Create a fishnet shapefile inside the defined coordinates 
     outputGridfn: output shapefile to hold the grid

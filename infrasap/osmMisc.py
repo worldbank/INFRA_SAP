@@ -15,7 +15,7 @@ import pandas as pd
 import networkx as nx
 
 from shapely.geometry import box
-from GOSTRocks import misc
+#import misc
 
 
 # Highway features are reclassified to 4 OSMLR classes for simplification and standardization

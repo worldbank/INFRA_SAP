@@ -39,7 +39,6 @@ def extract_rai_network(focal_osm, epsg=3857, rai_buffer=2000):
         except:
             return(5)
     roadsGPD_rai['OSMLR_num'] = roadsGPD_rai['OSMLR'].apply(lambda x: get_num(str(x)[-1]))
-    roadsGPD_rai = roadsGPD_rai.to_crs('EPSG:4326')
     
     return(roadsGPD_rai)
     

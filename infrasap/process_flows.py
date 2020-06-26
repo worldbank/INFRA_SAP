@@ -110,12 +110,12 @@ class comtrade_flow(object):
         
         # Summarize country summaries
         agg = self.country_summary.groupby(['Reporter ISO', "Trade Flow"])
-        most_recent = agg.first().reset_index()
+        most_recent = agg.last().reset_index()
         most_recent_import = most_recent.loc[most_recent['Trade Flow'] == "Import"]
         most_recent_export = most_recent.loc[most_recent['Trade Flow'] == "Export"]        
         # Summarize country summaries
         agg_flow = self.country_flows.groupby(['Reporter ISO', "Partner ISO", "Trade Flow"])
-        most_recent_flow = agg_flow.first().reset_index()
+        most_recent_flow = agg_flow.last().reset_index()
         most_recent_import_flow = most_recent_flow.loc[most_recent_flow['Trade Flow'] == "Import"]
         most_recent_export_flow = most_recent_flow.loc[most_recent_flow['Trade Flow'] == "Export"]
         
