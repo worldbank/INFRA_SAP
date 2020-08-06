@@ -179,7 +179,7 @@ def zonalStats(inShp, inRaster, bandNum=1, mask_A = None, reProj = False, minVal
         curRaster.write_mask(mask_A)
 
     outputData=[]
-    if inVector.crs != curRaster.crs:
+    if inVector.crs.to_epsg() != curRaster.crs.to_epsg():
         if reProj:
             inVector = inVector.to_crs(curRaster.crs)
         else:

@@ -9,7 +9,7 @@ import GOSTnets as gn
 import GOSTnets.load_osm as losm
 
 from . import osm_extractor as osm
-from . import GOSTRocks.rasterMisc as rMisc
+from . import rasterMisc as rMisc
 
 from shapely.geometry import box
 
@@ -63,7 +63,7 @@ def calculate_rai(out_bounds, out_bounds_id, wp_data, roadsGPD_rai, rai_folder):
         # Generate pop map within RAI pop
         if not os.path.exists(rai_pop):
             cur_roads = roadsGPD_rai.loc[roadsGPD_rai['OSMLR_num'] <= road_count]
-            roads_mask = rasterio.mask.mask(wp_data, cur_roads.unary_union, invert=False)
+            roads_mask = rasterio.mask.mask(wp_data, [cur_roads.unary_union], invert=False)
             with rasterio.open(rai_pop, 'w', **wp_data.meta) as out:
                 out.write(roads_mask[0])
         rai_pop = rMisc.zonalStats(out_bounds, rai_pop, minVal=0)
