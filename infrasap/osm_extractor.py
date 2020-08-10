@@ -88,9 +88,14 @@ class InfraExtractor(osmium.SimpleHandler):
             try:
                 wkb = wkbfab.create_multipolygon(n)
             except:
-                wkb = wkbfab.create_linestring(n)
-            shp = wkblib.loads(wkb, hex=True)
-            self.airports.append([n.id, shp, shp.centroid.x, shp.centroid.y, n.tags.get('aerodrome:type'), n.tags.get('name'), n.tags.get('name:en')])
+                try:
+                    wkb = wkbfab.create_linestring(n)
+                except:
+                    print(n)
+                    wkb = None
+            if not wkb is None:
+                shp = wkblib.loads(wkb, hex=True)
+                self.airports.append([n.id, shp, shp.centroid.x, shp.centroid.y, n.tags.get('aerodrome:type'), n.tags.get('name'), n.tags.get('name:en')])
         if n.tags.get('harbour') == "yes":
             try:
                 wkb = wkbfab.create_multipolygon(n)
@@ -134,7 +139,10 @@ def load_pois(osm_file, exact_bounds):
     airports.drop(['geometry'], axis=1, inplace=True)
     airports = gpd.GeoDataFrame(airports, geometry=airports_geom, crs={'init':'epsg:4326'})
     airports = airports[airports.intersects(exact_bounds)]
-    airports['TYPE2'] = airports.apply(lambda x: check_international(x), axis=1)
+    try:
+        airports['TYPE2'] = airports.apply(lambda x: check_international(x), axis=1)
+    except:
+        airports['TYPE2'] = ""
     
     ports =    pd.DataFrame(h.ports, columns=["OSM_ID",'geometry', 'x', 'y'])
     ports_geom = [Point(x) for x in zip(ports['x'], ports['y'])]

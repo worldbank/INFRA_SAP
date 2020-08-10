@@ -1,4 +1,4 @@
-import os, sys, importlib, subprocess, copy
+import os, sys, importlib, subprocess, copy, multiprocessing
 import rasterio, geohash
 
 import geopandas as gpd
@@ -9,10 +9,13 @@ from shapely.geometry import Point
 from shapely.wkt import loads
 from rasterio import features
 from collections import Counter
+from multiprocessing import Pool
 
 try:
     from . import vulnerability_mapping as vulmap
     from . import misc
+    from . import rasterMisc as rMisc
+    from . import UrbanRaster as urban
 except:
     import vulnerability_mapping as vulmap 
     import misc
@@ -238,25 +241,64 @@ def run_zonal(admin_shapes, rasters, out_suffix='', iso3=''):
     for shp in admin_shapes:
         inD = gpd.read_file(shp)
         out_zonal = shp.replace(".shp", "_zonal%s.csv" % out_suffix)
+        misc.tPrint(f"Processed: {iso3} {os.path.basename(shp)}")
+        write_out = False
         if not os.path.exists(out_zonal):
             for var_name, definition in rasters.items():
-                if definition['vars'][0] == 'C':
-                    uVals = definition['unqVals']
-                    res = rMisc.zonalStats(inD, definition['raster_file'], rastType='C', unqVals=uVals, reProj=True)                    
-                    res = pd.DataFrame(res, columns=['LC_%s' % x for x in uVals])
-                    for column in res.columns:
-                        inD[column] = res[column]
-                else:
-                    # Zonal stats
-                    res = rMisc.zonalStats(inD, definition['raster_file'], minVal=0, reProj=True)
-                    res = pd.DataFrame(res, columns=['SUM','MIN','MAX','MEAN'])
-                    res.columns = [f"{var_name}_{x}" for x in res.columns]
-                    for var in definition['vars']:
-                        inD[f"{var_name}_{var}"] = res[f"{var_name}_{var}"]
-                misc.tPrint(f"Processed: {iso3} {var_name}")
-            inD.drop(['geometry'], axis=1, inplace=True)
-            pd.DataFrame(inD).to_csv(out_zonal)
- 
+                if os.path.exists(definition['raster_file']):
+                    write_out = True
+                    if definition['vars'][0] == 'C':
+                        uVals = definition['unqVals']
+                        res = rMisc.zonalStats(inD, definition['raster_file'], rastType='C', unqVals=uVals, reProj=True)                    
+                        res = pd.DataFrame(res, columns=['LC_%s' % x for x in uVals])
+                        for column in res.columns:
+                            inD[column] = res[column]
+                    else:
+                        # Zonal stats
+                        res = rMisc.zonalStats(inD, definition['raster_file'], minVal=0, reProj=True)
+                        res = pd.DataFrame(res, columns=['SUM','MIN','MAX','MEAN'])
+                        res.columns = [f"{var_name}_{x}" for x in res.columns]
+                        for var in definition['vars']:
+                            inD[f"{var_name}_{var}"] = res[f"{var_name}_{var}"]                
+            if write_out:
+                inD.drop(['geometry'], axis=1, inplace=True)
+                pd.DataFrame(inD).to_csv(out_zonal)
+
+def check_zonal(country_folder, remove_bad = False):
+    ''' Check the results of the zonal statistics
+    '''
+    
+    stat_files = []
+    for root, dirs, files in os.walk(country_folder):
+        if not "FINAL" in root:
+            for f in files:
+                if f[-4:] == ".csv":
+                    stat_files.append(os.path.join(root, f))
+        
+    res = {}
+    for stat_file in stat_files:
+        if "DHS" in stat_file:
+            good_col = "age_final_0_4_househ_SUM"
+            bad_col = "R10_SUM"
+        else:
+            good_col = "R10_SUM"
+            bad_col = "age_final_0_4_househ_SUM"
+        xx = pd.read_csv(stat_file)
+        cols = list(xx.columns)
+        val = 0
+        if good_col in cols:
+            val += 1
+        if bad_col in cols:
+            val += 10
+        res[stat_file] = val
+    
+    if remove_bad:
+        for f, score in res.items():
+            if score in [0, 10]:
+                os.remove(f)
+            
+    return(res)
+            
 def combine_dhs_pop(popRaster, dhs_raster, out_file, factor=100):
     ''' 
     INPUT
@@ -329,6 +371,78 @@ def summarize_DHS(template, dhs_files, country_folder, iso3):
                         misc.tPrint(f"Error processing {key} - {field}")
     return(dhs_rasters)
  
+def extract_data(inG, inG1, inG2, inL, inR):
+    country_folder = os.path.join(output_folder, iso3)
+    adm0_file = os.path.join(country_folder, "adm0.shp")
+    adm1_file = os.path.join(country_folder, "adm1.shp")
+    adm2_file = os.path.join(country_folder, "adm2.shp")
+    lc_file = os.path.join(country_folder, "LC.tif")
+           
+    if not os.path.exists(country_folder):
+        os.makedirs(country_folder)
+    country_bounds = inG.loc[inG['ISO3'] == iso3].to_crs({'init':'epsg:4326'})
+    if not os.path.exists(adm0_file):
+        country_bounds.to_file(adm0_file)
+    if not os.path.exists(adm1_file):
+        try:
+            country_adm1   = inG1.loc[inG1['ISO3'] == iso3].to_crs({'init':'epsg:4326'})
+            country_adm1.to_file(adm1_file)
+        except:
+            misc.tPrint("%s Could not extract ADMIN 1" % iso3)
+    if not os.path.exists(adm2_file):
+        try:
+            country_adm2   = inG2.loc[inG2['ISO3'] == iso3].to_crs({'init':'epsg:4326'})
+            country_adm2.to_file(adm2_file)
+        except:
+            misc.tPrint("%s Could not extract ADMIN 2" % iso3)
+    if not os.path.exists(lc_file):
+        rMisc.clipRaster(inL, gpd.read_file(adm0_file), lc_file)
+        
+    calculate_vulnerability(iso3, country_folder, country_bounds, pop_folder, pop_files)
+    misc.tPrint("***%s Calculated Vulnerability" % iso3)
+    try:
+        create_urban_data(iso3, country_folder, country_bounds, inR, calc_urban=False)
+        misc.tPrint("***%s Calculated Urban Extents" % iso3)                           
+    except:
+        misc.tPrint("%s errored on HD clusters" % iso3)
+        try:
+            create_urban_data(iso3, country_folder, country_bounds, inR, calc_urban=True, calc_hd_urban=False)
+        except:
+            misc.tPrint("%s errored on all clusters" % iso3)        
+    #extract_osm(country_bounds, country_folder)
+    #misc.tPrint("***Extracted OSM")
+    
+ 
+def run_all(iso3, output_folder, dhs_files):
+    country_folder = os.path.join(output_folder, iso3)
+    # extract national bounds
+    misc.tPrint("Processing %s" % iso3)        
+    #summarize DHS
+    country_pop = os.path.join(country_folder, "WP_2020_1km.tif")
+    dhs_rasters = summarize_DHS(country_pop, dhs_files, country_folder, iso3)
+    
+    #Run zonal stats
+    cur_rasters = copy.deepcopy(hnp_categories)
+    for key, values in cur_rasters.items():
+        values['raster_file'] = os.path.join(country_folder, values['raster_file'])
+        cur_rasters[key] = values
+    
+    cur_dhs = copy.deepcopy(dhs_rasters)
+    for key, values in dhs_rasters.items():
+        values['raster_file'] = os.path.join(country_folder, values['raster_file'])
+        cur_dhs[key] = values        
+    
+    all_shps = []
+    for root, dirs, files, in os.walk(country_folder):
+        for f in files:
+            if f[-4:] == ".shp" and not "zonal" in f:
+                all_shps.append(os.path.join(root, f))
+                
+    run_zonal(all_shps, cur_rasters, out_suffix="_BASE", iso3 = iso3)
+    misc.tPrint("***%s Calculated Base Zonal" % iso3)
+    run_zonal(all_shps, cur_dhs, out_suffix="_DHS", iso3 = iso3)
+    misc.tPrint("***%s Calculated DHS Zonal" % iso3)
+ 
 def main():
     # define the input datasets
     global_bounds = "/home/public/Data/GLOBAL/ADMIN/Admin0_Polys.shp"
@@ -353,87 +467,17 @@ def main():
     inR = rasterio.open(population_raster)
     inL = rasterio.open(lcRaster)
 
-    '''
-    'COD', 'LAO', 'STP', 'PSE', 'COG', 'AFG', 'BGD', 'BDI', 'CPV', 'KHM', 
-          'DJI', 'ECU', 'ETH', 'GMB', 'GHA', 'HTI', 'IND', 'KEN', 'KGZ', 'MDV', 'MRT', 
-          'MNG', 'NPL', 'PAK', 'PRY', 'RWA', 'SEN', 'SLE', 'LKA', 'TJK', 'YEM', 'ARG', 
-          'LBR', 'MWI', 'MLI', 'NGA', 'PNG', 'DZA', 'BLR', 'BEN', 'BTN', 'BIH', 'BRA', 
-          'BFA', 'NIC', 'TCD', 'CIV', 'EGY', 'SLV', 'SWZ', 'FJI', 'GAB', 'GEO', 'GTM', 
-          'HND', 
-    '''
-    countries = ['BRA','MEX','EGY','UKR','PER','FJI']
-    #countries = set(countries)
+    countries = ['ARG', 'PAK', 'ZAF', 'COL', 'ZWE', 'MNG', 'SLE', 'CPV', 'KEN', 'GHA', 'AFG', 'YEM', 'ECU', 'PRY', 'MRT', 'MDV', 'KGZ', 'HTI', 'DJI', 'KHM', 'TJK', 'GMB', 'LKA', 'SEN', 'STP', 'SLV', 'VEN', 'MLI', 'RWA', 'BOL', 'TZA', 'MAR', 'IND', 'IDN', 'SDN', 'AGO', 'BEN', 'BWA', 'BFA', 'BDI', 'CMR', 'CAF', 'TCD', 'COM', 'COG', 'CIV', 'COD', 'SSD', 'ERI', 'ETH', 'GAB', 'GNB', 'GIN', 'LSO', 'LBR', 'MDG', 'MWI', 'MUS', 'MOZ', 'NAM', 'NER', 'NGA', 'SYC', 'SOM', 'SWZ', 'TGO', 'UGA', 'ZMB', 'LCA', 'PHL', 'GTM', 'BGD', 'BRA', 'MEX', 'EGY', 'UKR', 'PER', 'LAO', 'PSE', 'NPL', 'PNG', 'DZA', 'BLR', 'BTN', 'BIH', 'NIC', 'FJI', 'GEO', 'HND', 'JOR', 'MHL', 'MDA', 'MMR', 'MKD', 'PAN', 'WSM', 'SLB', 'TUN', 'TUR', 'URY', 'UZB', 'ALB', 'HRV', 'IRN', 'SRB', 'TTO', 'ATG', 'CHN', 'IRQ']
+    countries = ['EGY','PHL','BGD']
+    countries = set(countries)
     nCountries = len(countries)
     idx = 0
+    all_commands = []
     for iso3 in countries:
-        # extract national bounds
-        misc.tPrint("Processing %s of %s: %s" % (idx, nCountries, iso3))
-        idx = idx + 1
-        country_folder = os.path.join(output_folder, iso3)
-        adm0_file = os.path.join(country_folder, "adm0.shp")
-        adm1_file = os.path.join(country_folder, "adm1.shp")
-        adm2_file = os.path.join(country_folder, "adm2.shp")
-        lc_file = os.path.join(country_folder, "LC.tif")
-               
-        if not os.path.exists(country_folder):
-            os.makedirs(country_folder)
-        country_bounds = inG.loc[inG['ISO3'] == iso3].to_crs({'init':'epsg:4326'})
-        if not os.path.exists(adm0_file):
-            country_bounds.to_file(adm0_file)
-        if not os.path.exists(adm1_file):
-            try:
-                country_adm1   = inG1.loc[inG1['ISO3'] == iso3].to_crs({'init':'epsg:4326'})
-                country_adm1.to_file(adm1_file)
-            except:
-                misc.tPrint("Could not extract ADMIN 1")
-        if not os.path.exists(adm2_file):
-            try:
-                country_adm2   = inG2.loc[inG2['ISO3'] == iso3].to_crs({'init':'epsg:4326'})
-                country_adm2.to_file(adm2_file)
-            except:
-                misc.tPrint("Could not extract ADMIN 2")
-        if not os.path.exists(lc_file):
-            rMisc.clipRaster(inL, gpd.read_file(adm0_file), lc_file)
-            
-        country_bounds = country_bounds.to_crs({'init':'epsg:4326'})
-        calculate_vulnerability(iso3, country_folder, country_bounds, pop_folder, pop_files)
-        misc.tPrint("***Calculated Vulnerability")
-        try:
-            create_urban_data(iso3, country_folder, country_bounds, inR, calc_urban=False)
-            misc.tPrint("***Calculated Urban Extents")                           
-        except:
-            misc.tPrint("%s errored on HD clusters" % iso3)
-            try:
-                create_urban_data(iso3, country_folder, country_bounds, inR, calc_urban=True, calc_hd_urban=False)
-            except:
-                misc.tPrint("%s errored on all clusters" % iso3)        
-        #extract_osm(country_bounds, country_folder)
-        #misc.tPrint("***Extracted OSM")
+        all_commands.append([iso3, output_folder, dhs_files])
         
-        #summarize DHS
-        country_pop = os.path.join(country_folder, "WP_2020_1km.tif")
-        dhs_rasters = summarize_DHS(country_pop, dhs_files, country_folder, iso3)
-        
-        #Run zonal stats
-        cur_rasters = copy.deepcopy(hnp_categories)
-        for key, values in cur_rasters.items():
-            values['raster_file'] = os.path.join(country_folder, values['raster_file'])
-            cur_rasters[key] = values
-        
-        cur_dhs = copy.deepcopy(dhs_rasters)
-        for key, values in dhs_rasters.items():
-            values['raster_file'] = os.path.join(country_folder, values['raster_file'])
-            cur_dhs[key] = values        
-        
-        all_shps = []
-        for root, dirs, files, in os.walk(country_folder):
-            for f in files:
-                if f[-4:] == ".shp" and not "zonal" in f:
-                    all_shps.append(os.path.join(root, f))
-        run_zonal(all_shps, cur_rasters, out_suffix="_BASE", iso3 = iso3)
-        misc.tPrint("***Calculated Base Zonal")
-        run_zonal(all_shps, cur_dhs, out_suffix="_DHS", iso3 = iso3)
-        misc.tPrint("***Calculated DHS Zonal")
+    with Pool(round(multiprocessing.cpu_count() * 0.8)) as p:
+        res = p.starmap(run_all, all_commands)
 
 if __name__ == "__main__":
     main()
