@@ -42,6 +42,73 @@ OSMLR_Classes = {
 "service": "OSMLR level 4"
 }
 
+class highwayExtractor(osmium.SimpleHandler):
+    ''' Extract highways with relevant tags
+    '''
+    def __init__(self, verbose=False):
+        osmium.SimpleHandler.__init__(self)
+        self.OSMLR1 = []
+        self.OSMLR2 = []
+        self.OSMLR3 = []
+        self.OSMLR4 = []
+        self.OSMLROther = []
+        self.tags = ['service','railway',"usage","gauge","electrified"]
+    
+    def way(self, n):
+        try:
+            highway = n.tags.get("highway")
+            try:
+                osmlr_level = OSMLR_Classes[highway]
+            except:
+                osmlr_level = ""
+            wkb = wkbfab.create_linestring(n)
+            shp = wkblib.loads(wkb, hex=True)
+            res = [n.id, shp, highway]
+            for t in self.tags:
+                try:
+                    res.append(n.tags.get(t))
+                except:
+                    res.append("")
+            
+            if osmlr_level == "OSMLR level 1":
+                self.OSMLR1.append(res)
+            if osmlr_level == "OSMLR level 2":
+                self.OSMLR2.append(res)
+            if osmlr_level == "OSMLR level 3":
+                self.OSMLR3.append(res)
+            if osmlr_level == "OSMLR level 4":
+                self.OSMLR4.append(res)
+            if osmlr_level == "other":
+                self.OSMLROther.append(res)
+                
+        except:
+            pass
+        
+class railwayExtractor(osmium.SimpleHandler):
+    ''' Extract railways with relevant tags
+    '''
+    def __init__(self, verbose=False):
+        osmium.SimpleHandler.__init__(self)
+        self.railways = []
+        self.tags = ['service','railway',"usage","gauge","electrified"]
+    
+    def way(self, n):
+        if n.tags.get("railway"):
+            try:
+                wkb = wkbfab.create_linestring(n)
+                shp = wkblib.loads(wkb, hex=True)
+                res = [n.id, shp]
+                for t in self.tags:
+                    try:
+                        res.append(n.tags.get(t))
+                    except:
+                        res.append("")
+                self.railways.append(res)
+            except:
+                pass
+        
+
+
 # extract directly through osmium
 class InfraExtractor(osmium.SimpleHandler):
     """ Extractor for use in osmium SimpleHandler to extract nodes and highways

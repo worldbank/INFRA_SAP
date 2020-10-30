@@ -58,7 +58,7 @@ class comtrade_flow(object):
     '''
     
     def __init__(self, comtrade_csv, type, 
-                 good_columns = ['Qty Unit Code','Year','Trade Flow','Reporter ISO', 'Partner ISO', 'Commodity', 'Qty', 'Trade Value (US$)','Reporter_Pt', 'Partner_Pt']
+                 good_columns = ['Qty Unit Code','Year','Trade Flow','Reporter ISO', 'Partner ISO', 'Commodity', 'Qty', 'Trade Value (US$)','Reporter_Pt', 'Partner_Pt', 'TOE']
                  ):
         '''
         initiates the comtrade_flow object, see help(comtrade_flow) for more information
@@ -81,10 +81,25 @@ class comtrade_flow(object):
 
         good_quantity_code = [str(x) for x in good_quantity_code]
         inD = self.raw_data
+        for n_field in ['Trade Value (US$)', 'Qty', 'TOE']:
+            try:
+                inD[n_field] = inD[n_field].astype(float)
+            except:
+                inD[n_field] = inD[n_field].replace('','0').astype(float)
+            try:
+                inD[n_field] = inD[n_field].astype(float)
+            except:
+                inD[n_field] = inD[n_field].replace('','0').astype(float)
         # filter out bad data
-        inD = inD.loc[inD['Qty Unit Code'].isin(good_quantity_code), self.good_columns]
+        if len(good_quantity_code) > 0:
+            inD = inD.loc[inD['Qty Unit Code'].isin(good_quantity_code), self.good_columns]
+        
+        #Collapse commodities into single rows
+        inD = inD.groupby(['Reporter ISO', 'Partner ISO', 'Year', 'Trade Flow'])['Qty', 'Trade Value (US$)','TOE'].sum().reset_index()
+        
         inD['Reporter_Pt'] = inD['Reporter ISO'].apply(lambda x: get_centroid(x, inB))
-        inD['Partner_Pt'] = inD['Partner ISO'].apply(lambda x: get_centroid(x, inB))
+        inD['Partner_Pt'] = inD['Partner ISO'].apply(lambda x: get_centroid(x, inB))        
+        
         #generate country flows geometry        
         country_flows = inD.loc[inD['Partner ISO'] != "WLD"]
         country_flows['geometry'] = country_flows.apply(lambda x: generate_line_string(x, line_type), axis=1)
@@ -144,16 +159,7 @@ class comtrade_flow(object):
         #Convert geometry columns to text
         self.country_flows['Reporter_Pt'] = self.country_flows['Reporter_Pt'].apply(str)
         self.country_flows['Partner_Pt'] = self.country_flows['Partner_Pt'].apply(str)
-        for n_field in ['Trade Value (US$)', 'Qty']:
-            try:
-                self.country_flows[n_field] = self.country_flows[n_field].astype(float)
-            except:
-                self.country_flows[n_field] = self.country_flows[n_field].replace('','0').astype(float)
-            try:
-                self.country_summary[n_field] = self.country_summary[n_field].astype(float)
-            except:
-                self.country_summary[n_field] = self.country_summary[n_field].replace('','0').astype(float)
-                
+               
         #Convert country summary columns to geometry
         if 'Reporter_Pt' in self.country_summary.columns:
             country_summary_geom = self.country_summary['Reporter_Pt']

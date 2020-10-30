@@ -52,7 +52,7 @@ def clipRaster(inR, inD, outFile):
         dest.write(out_img)
 
 
-def rasterizeDataFrame(inD, outFile, idField='', templateRaster='', nCells=100):
+def rasterizeDataFrame(inD, outFile, idField='', templateRaster='', nCells=0, res=0):
     ''' Convert input geopandas dataframe into a raster file
         inD = gpd.read_file(r"C:\Temp\TFRecord\Data\Training Data\test3_training.shp")
         templateRaster=r"C:\Temp\TFRecord\Data\Training Data\test3.tif"
@@ -60,20 +60,20 @@ def rasterizeDataFrame(inD, outFile, idField='', templateRaster='', nCells=100):
         outFile = templateRaster.replace(".tif", "_labels.tif")
 
     INPUT VARIABLES
-    inD [geopandas DataFrame]
-    outFile [string] - path for creating output file
+        inD [geopandas DataFrame]
+        outFile [string] - path for creating output file
     OPTIONAL
-    idField [string] - field to rasterize, sets everything to 1 otherwise
-    templateRaster [string] - raster upon which to base raster creation
-    nCells - resolution of output, if no template raster
-
-    EXAMPLE
-    templateRaster=r"C:\Temp\TFRecord\Data\Training Data\test3.tif"
-    idField = 'ID2'
-    inD = r"C:\Temp\TFRecord\Data\Training Data\test3_training.shp"
-    rasterizeDataFrame(inD, templateRaster.replace(".tif", "_labels.tif"),
-                        idField=idField, templateRaster=templateRaster)
+        idField [string] - field to rasterize, sets everything to 1 otherwise
+        templateRaster [string] - raster upon which to base raster creation
+        nCells - number of cells in width and height
+        res - resolution of output raster in units of the crs
     '''
+    ###Parameter checking
+    if nCells <=0 and res <=0:
+        raise(ValueError("Must define one of nCells or res"))
+    if nCells > 0 and res > 0:
+        raise(ValueError("Cannot define both nCells and res"))
+
     #Set VALUE field equal to idField
     inD['VALUE'] = 1
     if idField != '':
@@ -83,18 +83,27 @@ def rasterizeDataFrame(inD, outFile, idField='', templateRaster='', nCells=100):
         inR = rasterio.open(templateRaster)
         cMeta = inR.meta.copy()
         cMeta.update(count=1)
+        nTransform = cMeta['transform']
     else:
-        bounds = inD.unary_union.bounds
-        cellWidth  = (bounds[2] - bounds[0]) / nCells
-        cellHeight = ((bounds[3] - bounds[1]) / nCells) * -1
-        cAffine = affine.Affine(bounds[0], cellWidth, 0, bounds, 0, cellHeight)
-        nTransform = (bounds[0], cellWidth, 0, bounds[3], 0, cellHeight)
-        cMeta = {'count':1, 'crs': inD.crs, 'dtype':'uint8', 'affine':cAffine, 'driver':'GTiff',
-                 'transform':nTransform, 'height':nCells, 'width':nCells}
+        bounds = inD.total_bounds
+        if nCells > 0:
+            cellWidth  = (bounds[2] - bounds[0]) / nCells
+            cellHeight = ((bounds[3] - bounds[1]) / nCells) * -1
+            height = nCells
+            width = nCells
+        if res > 0:
+            cellWidth = res
+            cellHeight = res
+            height = int(round((bounds[3] - bounds[1]) / res))
+            width =  int(round((bounds[2] - bounds[0]) / res))
+
+        b = inD.total_bounds
+        nTransform = rasterio.transform.from_bounds(b[0], b[1], b[2], b[3], width, height)
+        cMeta = {'count':1, 'crs': inD.crs, 'dtype':inD['VALUE'].dtype, 'driver':'GTiff',
+                 'transform':nTransform, 'height':height, 'width':width}
     shapes = ((row.geometry,row.VALUE) for idx, row in inD.iterrows())
+    burned = features.rasterize(shapes=shapes, out_shape=(cMeta['height'], cMeta['width']), transform=nTransform, dtype=cMeta['dtype'])
     with rasterio.open(outFile, 'w', **cMeta) as out:
-        burned = features.rasterize(shapes=shapes, fill=0, out_shape=(cMeta['height'], cMeta['width']), transform=out.transform)
-        burned = burned.astype(cMeta['dtype'])
         out.write_band(1, burned)
 
 def polygonizeArray(data, b, curRaster):
@@ -179,7 +188,7 @@ def zonalStats(inShp, inRaster, bandNum=1, mask_A = None, reProj = False, minVal
         curRaster.write_mask(mask_A)
 
     outputData=[]
-    if inVector.crs.to_epsg() != curRaster.crs.to_epsg():
+    if inVector.crs != curRaster.crs:
         if reProj:
             inVector = inVector.to_crs(curRaster.crs)
         else:
@@ -264,7 +273,10 @@ def zonalStats(inShp, inRaster, bandNum=1, mask_A = None, reProj = False, minVal
             except Exception as e:
                 if verbose:
                     print(e)
-                outputData.append([-1, -1, -1, -1])
+                if rastType == 'N':
+                    outputData.append([-1, -1, -1, -1])
+                else:
+                    outputData.append([-1 for x in unqVals])
         except:
             print("Error processing %s" % fCount)
     return outputData
@@ -275,16 +287,21 @@ def standardizeInputRasters(inR1, inR2, inR1_outFile, data_type="N"):
     Inputs:
     inR1, inR2 [rasterio raster object]
     inR1_outFile [string] - output file for creating inR1 standardized to inR2
-
+    [optional] data_type [string ['C','N']]
+    
     Returns:
     nothing
     '''
     if inR1.crs != inR2.crs:
-        raise ValueError("CRS Error")
+        bounds = gpd.GeoDataFrame(pd.DataFrame([[1, box(*inR2.bounds)]], columns=["ID","geometry"]), geometry='geometry', crs=inR2.crs)
+        bounds = bounds.to_crs(inR1.crs)
+        b2 = bounds.total_bounds
+        boxJSON = [{'type': 'Polygon', 'coordinates': [[[b2[0], b2[1]],[b2[0], b2[3]],[b2[2], b2[3]],[b2[2], b2[1]],[b2[0], b2[1]]]]}]
+    else:
+        b2 = inR2.bounds
+        boxJSON = [{'type': 'Polygon', 'coordinates': [[[b2.left, b2.bottom],[b2.left, b2.top],[b2.right, b2.top],[b2.right, b2.bottom],[b2.left, b2.bottom]]]}]
     #Clip R1 to R2
     #Get JSON of bounding box
-    b2 = inR2.bounds
-    boxJSON = [{'type': 'Polygon', 'coordinates': [[[b2.left, b2.bottom],[b2.left, b2.top],[b2.right, b2.top],[b2.right, b2.bottom],[b2.left, b2.bottom]]]}]
     out_img, out_transform = mask(inR1, boxJSON, crop=True)
     out_meta = inR1.meta.copy()
     #Re-scale resolution of R1 to R2
