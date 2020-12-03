@@ -99,7 +99,7 @@ def generate_network_raster(inH, sel_roads, min_speed=5, speed_col='speed', reso
     # convert to a version that claculates the seconds to cross each cell
     traversal_time = resolution / (speed_image * 1000 / (60 * 60)) # km/h --> m/s * resolution of image in metres
     return(traversal_time)
-
+   
 def calculate_travel_time(inH, mcp, destinations, out_raster = ''):
     ''' Calculate travel time raster
     
