@@ -21,12 +21,7 @@ except:
     import misc
     import rasterMisc as rMisc
     import UrbanRaster as urban
-'''
-import vulnerability_mapping as vulmap
-import misc as misc
-import osmMisc as osm
-import UrbanRaster as urban
-'''
+
 # https://mrc-ide.github.io/global-lmic-reports/parameters.html
 # https://www.cdc.gov/mmwr/volumes/69/wr/mm6912e2.htm
 vul_def = {'0-5'  :0.001,
