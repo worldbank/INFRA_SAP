@@ -153,7 +153,7 @@ def calculate_access_percentages(OD, target, dest_type, rural=False, urban_exten
     min_df.loc[:,"target_idx"] = min_df.target_idx.astype(int)
     min_df.loc[:,'tt_min_cut'] = pd.cut(min_df.tt_min, bins=thresholds)
     
-    summary = min_df.groupby(['target_idx','tt_min_cut'])[['pointid']].sum().unstack().fillna(0)
+    summary = min_df.groupby(['target_idx','tt_min_cut'])[['Pop']].sum().unstack().fillna(0)
     summary.columns = summary.columns.get_level_values(1)
     summary_pct = summary.apply(lambda x: x/(summary.sum(axis=1))).fillna(0)
 #     summary_pct.columns = summary_pct.columns.get_level_values(1)
