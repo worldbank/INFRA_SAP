@@ -136,7 +136,7 @@ def get_all_amenities(bounds):
     shops = get_nodes(inH.bounds, shp_tags)
     
     
-def generate_feature_vectors(network_r, mcp, inH, threshold, verbose=True):
+def generate_feature_vectors(network_r, mcp, inH, threshold, featIdx, verbose=True):
     ''' Generate individual market sheds for each feature in the input dataset
     
     INPUTS
@@ -144,6 +144,7 @@ def generate_feature_vectors(network_r, mcp, inH, threshold, verbose=True):
         mcp [skimage.graph.MCP_Geometric] - input graph
         inH [geopandas data frame] - geopandas data frame from which to calculate features
         threshold [list of int] - travel treshold from which to calculate vectors in units of graph
+        featIdx [string] - column name in inH to append to output marketshed dataset
         
     RETURNS
         [geopandas dataframe]
@@ -154,7 +155,7 @@ def generate_feature_vectors(network_r, mcp, inH, threshold, verbose=True):
     for idx, row in inH.iterrows():
         feat_count = feat_count + 1
         if verbose:
-            tPrint(f"{feat_count} of {n}")
+            tPrint(f"{feat_count} of {n}: {row[featIdx]}")
         cur_idx = network_r.index(row['geometry'].x, row['geometry'].y)
         if cur_idx[0] > 0 and cur_idx[1] > 0 and cur_idx[0] < network_r.shape[0] and cur_idx[1] < network_r.shape[1]:
             costs, traceback = mcp.find_costs([cur_idx])
@@ -165,7 +166,7 @@ def generate_feature_vectors(network_r, mcp, inH, threshold, verbose=True):
                     if value == 1.0:
                         all_shapes.append([shape(cShape)])
                 complete_shape = cascaded_union([x[0] for x in all_shapes])
-                complete_shapes.append([complete_shape, thresh, feat_count])
+                complete_shapes.append([complete_shape, thresh, row[featIdx]])
     final = gpd.GeoDataFrame(complete_shapes, columns=["geometry", "threshold", "IDX"], crs=network_r.crs)
     return(final)
     
