@@ -93,10 +93,11 @@ class comtrade_flow(object):
                 inD[n_field] = inD[n_field].replace('','0').astype(float)
         # filter out bad data
         if len(good_quantity_code) > 0:
+            inD[good_quantity_col] = inD[good_quantity_col].astype(str)
             inD = inD.loc[inD[good_quantity_col].isin(good_quantity_code), self.good_columns]
         
         #Collapse commodities into single rows
-        inD = inD.groupby(['Reporter ISO', 'Partner ISO', 'Year', 'Trade Flow'])[val_fields].sum().reset_index()
+        inD = inD.groupby(['Reporter ISO', 'Partner ISO', 'Year', 'Trade Flow']).sum().reset_index()
         
         inD['Reporter_Pt'] = inD['Reporter ISO'].apply(lambda x: get_centroid(x, inB))
         inD['Partner_Pt'] = inD['Partner ISO'].apply(lambda x: get_centroid(x, inB))        
