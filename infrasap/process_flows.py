@@ -70,18 +70,19 @@ class comtrade_flow(object):
         self.raw_data = gpd.read_file(self.csv_file)
         self.raw_data.crs = {'init':'epsg:4326'}
             
-    def initialize(self, good_quantity_code, inB, line_type="normal"):
+    def initialize(self, good_quantity_code, inB, good_quantity_col = 'Qty Unit Code', line_type="normal", val_fields=['Trade Value (US$)', 'Qty', 'TOE']):
         '''
         Read in comtrade data, filter data without units, etc.
         
         :param: good_quantity_code - array of numbers describing the values in the column 'Qty Unit Code' that are acceptable
         :param: inB - geopandas data frame of national centroids. Must contain columns "ISO3" and "geometry"
         :param: line_type - connection type between flows. Can be set to "great" to generate great circles
+        :param" val_fields - fields in COMTRADE data to summarize
         '''
 
         good_quantity_code = [str(x) for x in good_quantity_code]
         inD = self.raw_data
-        for n_field in ['Trade Value (US$)', 'Qty', 'TOE']:
+        for n_field in val_fields:
             try:
                 inD[n_field] = inD[n_field].astype(float)
             except:
@@ -92,10 +93,11 @@ class comtrade_flow(object):
                 inD[n_field] = inD[n_field].replace('','0').astype(float)
         # filter out bad data
         if len(good_quantity_code) > 0:
-            inD = inD.loc[inD['Qty Unit Code'].isin(good_quantity_code), self.good_columns]
+            inD[good_quantity_col] = inD[good_quantity_col].astype(str)
+            inD = inD.loc[inD[good_quantity_col].isin(good_quantity_code), self.good_columns]
         
         #Collapse commodities into single rows
-        inD = inD.groupby(['Reporter ISO', 'Partner ISO', 'Year', 'Trade Flow'])['Qty', 'Trade Value (US$)','TOE'].sum().reset_index()
+        inD = inD.groupby(['Reporter ISO', 'Partner ISO', 'Year', 'Trade Flow']).sum().reset_index()
         
         inD['Reporter_Pt'] = inD['Reporter ISO'].apply(lambda x: get_centroid(x, inB))
         inD['Partner_Pt'] = inD['Partner ISO'].apply(lambda x: get_centroid(x, inB))        

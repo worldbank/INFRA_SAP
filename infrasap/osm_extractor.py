@@ -11,7 +11,7 @@ import pandas as pd
 import networkx as nx
 import shapely.wkb as wkblib
 
-from shapely.geometry import box, LineString, Point
+from shapely.geometry import box, LineString, Point, Polygon
 from shapely.ops import transform
 from functools import partial
 
@@ -41,6 +41,26 @@ OSMLR_Classes = {
 "track": "OSMLR level 4",
 "service": "OSMLR level 4"
 }
+
+class buildingExtractor(osmium.SimpleHandler):
+    ''' Extract all buildings
+    '''
+    def __init__(self, verbose=False):
+        osmium.SimpleHandler.__init__(self)
+        self.buildings=[]
+        
+    def way(self, n):
+        try:
+            building = n.tags.get('building')
+            if not building is None:
+                wkb = wkbfab.create_linestring(n)
+                shp = Polygon(wkblib.loads(wkb, hex=True))
+                res = [n.id, shp, building]
+                self.buildings.append(res)
+        except:
+            pass
+            
+    
 
 class highwayExtractor(osmium.SimpleHandler):
     ''' Extract highways with relevant tags
