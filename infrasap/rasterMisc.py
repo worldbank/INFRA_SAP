@@ -27,7 +27,7 @@ if not curPath in sys.path:
 
 from misc import tPrint
 
-def clipRaster(inR, inD, outFile):
+def clipRaster(inR, inD, outFile, reproj_crs=None):
     ''' Clip input raster
     INPUT
     [rasterio object] inR = rasterio.open(r"Q:/GLOBAL/POP&DEMO/GHS/BETA/FULL/MT/MT.vrt")
@@ -36,7 +36,10 @@ def clipRaster(inR, inD, outFile):
 
     '''
     if inD.crs != inR.crs:
-        inD = inD.to_crs(inR.crs)
+        if reproj_crs is not None:
+            inD = inD.to_crs(reproj_crs)
+        else:
+            inD = inD.to_crs(inR.crs)
     out_meta = inR.meta.copy()
     def getFeatures(gdf):
         #Function to parse features from GeoDataFrame in such a manner that rasterio wants them

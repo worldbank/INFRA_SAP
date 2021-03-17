@@ -54,7 +54,7 @@ def calculate_rai(out_bounds, out_bounds_id, wp_data, roadsGPD_rai, rai_folder):
     RETURNS
     [pandas dataframe]
     '''
-    actual_pop = rMisc.zonalStats(out_bounds, wp_data, minVal=0)
+    actual_pop = rMisc.zonalStats(out_bounds, wp_data, reProj=True, minVal=0)
     actual_pop = pd.DataFrame(actual_pop, columns=['SUM','MIN','MAX','STDEV'])
     # Generate OSMLR level road maps
     all_res = {}
@@ -66,7 +66,7 @@ def calculate_rai(out_bounds, out_bounds_id, wp_data, roadsGPD_rai, rai_folder):
             roads_mask = rasterio.mask.mask(wp_data, [cur_roads.unary_union], invert=False)
             with rasterio.open(rai_pop, 'w', **wp_data.meta) as out:
                 out.write(roads_mask[0])
-        rai_pop = rMisc.zonalStats(out_bounds, rai_pop, minVal=0)
+        rai_pop = rMisc.zonalStats(out_bounds, rai_pop, reProj=True, minVal=0)
 
         rai_pop = pd.DataFrame(rai_pop, columns=['SUM','MIN','MAX','STDEV'])
         rai_pop['ID'] = out_bounds[out_bounds_id]
